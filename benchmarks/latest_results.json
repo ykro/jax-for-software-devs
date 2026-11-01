@@ -1,0 +1,84 @@
+{
+  "environment": {
+    "python_version": "3.12.11",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "processor": "arm",
+    "jax_version": "0.12.0.1",
+    "numpy_version": "2.5.4",
+    "jax_backend": "cpu",
+    "jax_device": "cpu:0"
+  },
+  "experiments": {
+    "01_numpy_to_jax_arrays": {
+      "experiment": "01_numpy_to_jax_arrays",
+      "backend": "cpu",
+      "shape": [
+        8192,
+        32
+      ],
+      "immutability_error_raised": true,
+      "original_unmodified": true,
+      "numpy_ms": 5.8997,
+      "jax_eager_ms": 3.9126,
+      "jax_jit_ms": 0.2724,
+      "speedup_vs_numpy": 21.66,
+      "speedup_vs_eager": 14.36,
+      "max_diff_np_jit": 1.52587890625e-05,
+      "max_diff_eager_jit": 1.52587890625e-05
+    },
+    "02_jit_tracing_vs_execution": {
+      "experiment": "02_jit_tracing_vs_execution",
+      "backend": "cpu",
+      "n_elements": 65536,
+      "trace_count_for_3_same_shape_calls": 1,
+      "trace_count_after_new_shape": 2,
+      "jaxpr_num_equations": 36,
+      "stablehlo_lines": 61,
+      "first_call_compile_ms": 33.924,
+      "numpy_ms": 0.5089,
+      "cached_jit_ms": 0.0921,
+      "speedup": 5.53,
+      "max_diff": 2.384185791015625e-07,
+      "lax_cond_l2_norm": 1.0,
+      "lax_cond_linf_max": 1.0
+    },
+    "03_grad_as_code_transformation": {
+      "experiment": "03_grad_as_code_transformation",
+      "backend": "cpu",
+      "n_samples": 2048,
+      "n_params": 32,
+      "n_steps": 20,
+      "initial_loss": 0.195531,
+      "final_loss": 0.000519,
+      "loss_reduction_ratio": 376.48,
+      "grad_max_diff_vs_finite_diff": 1.2359581887722015e-05,
+      "finite_diff_ms": 1.6547,
+      "jax_value_and_grad_ms": 0.0565,
+      "speedup": 29.29
+    },
+    "04_vmap_goodbye_for_loops": {
+      "experiment": "04_vmap_goodbye_for_loops",
+      "backend": "cpu",
+      "batch_size": 10000,
+      "feature_dim": 16,
+      "for_loop_ms": 31.7093,
+      "vmap_jit_ms": 0.1466,
+      "speedup": 216.32,
+      "max_diff": 1.1920928955078125e-07
+    },
+    "05_deterministic_prng_keys": {
+      "experiment": "05_deterministic_prng_keys",
+      "backend": "cpu",
+      "n_workers": 2048,
+      "reused_key_identical": true,
+      "split_keys_distinct": true,
+      "bitwise_order_invariant": true,
+      "max_diff_forward_reversed": 0.0,
+      "max_diff_sequential_vmap": 1.1920928955078125e-07,
+      "sequential_loop_ms": 408.6253,
+      "vmap_parallel_ms": 8.6511,
+      "speedup": 47.23
+    }
+  },
+  "all_verifications_passed": true
+}

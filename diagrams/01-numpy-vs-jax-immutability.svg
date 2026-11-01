@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1200 660" xmlns="http://www.w3.org/2000/svg" data-diagram="architecture-delta" role="img" aria-labelledby="numpy-vs-jax-title numpy-vs-jax-desc" id="d-01-numpy-vs-jax-immutability-root">
+        <title id="numpy-vs-jax-title">NumPy in-place mutation vs JAX pure .at[].set() transformation</title>
+        <desc id="numpy-vs-jax-desc">Architecture delta comparing NumPy in-place array mutation with shared-buffer aliasing on CPU RAM against JAX immutable functional updates via .at[].set() lowered into fused PJRT buffers by OpenXLA.</desc>
+        <defs>
+      <style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;family=Noto+Serif:ital@0;1&amp;family=Noto+Sans+KR:wght@400;500;600&amp;family=Noto+Serif+KR:wght@400&amp;family=Noto+Sans+TC:wght@400;500;600&amp;family=Noto+Serif+TC:wght@400&amp;display=swap');
+      #d-01-numpy-vs-jax-immutability-root { --color-paper: #F7F6F2;
+      --color-paper-2: #EFECE6;
+      --color-ink: #0F2547;
+      --color-muted: #3B5B8C;
+      --color-rule: rgba(15,37,71,0.14);
+      --color-accent: #C59216;
+      --color-accent-text: #9A6F0B;
+      --font-sans: 'Geist', system-ui, sans-serif;
+      --font-serif: 'Instrument Serif', serif;
+      --font-mono: 'Geist Mono', ui-monospace, monospace; }
+      #d-01-numpy-vs-jax-immutability-root { font-family: var(--font-sans); color: var(--color-ink); }
+      #d-01-numpy-vs-jax-immutability-root .diagram-container { width: 100%; overflow-x: auto; }
+      #d-01-numpy-vs-jax-immutability-root .diagram-container:focus-visible { outline: 2px solid var(--color-muted); outline-offset: 4px; }
+      #d-01-numpy-vs-jax-immutability-root .scroll-hint { display: none; margin: 1rem 0 0; font-size: 0.8125rem; color: var(--color-muted); }
+      #d-01-numpy-vs-jax-immutability-root .scroll-hint { display: block; }
+      #d-01-numpy-vs-jax-immutability-root .diagram-container { overflow-x: visible; }</style>
+          <marker id="d-01-numpy-vs-jax-immutability-numpy-vs-jax-arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" fill="#3B5B8C"/></marker>
+        </defs>
+        <rect width="1200" height="660" fill="#F7F6F2"/>
+        <text x="24" y="28" fill="#0F2547" font-size="14" font-family="'Geist', sans-serif" font-weight="600">Before · NumPy Mutable Array</text>
+        <text x="24" y="50" fill="#3B5B8C" font-size="10" font-family="'Geist', sans-serif">Shared host RAM pointer + aliasing risk</text>
+        <text x="424" y="28" fill="#0F2547" font-size="14" font-family="'Geist', sans-serif" font-weight="600">Changes Ledger</text>
+        <text x="424" y="50" fill="#3B5B8C" font-size="10" font-family="'Geist', sans-serif">Functional immutability for XLA compiler safety</text>
+        <text x="840" y="28" fill="#0F2547" font-size="14" font-family="'Geist', sans-serif" font-weight="600">After · JAX Pure .at[].set()</text>
+        <text x="840" y="50" fill="#3B5B8C" font-size="10" font-family="'Geist', sans-serif">Immutable semantics + XLA buffer donation</text>
+        <path d="M 392 8 V 568 M 808 8 V 568" stroke="#0f2547" stroke-opacity="0.14" stroke-width="1"/>
+
+        <g data-snapshot="before" transform="translate(24 88)" data-grid="336 480 4">
+          <path data-kind="relationship" data-object-id="r1" data-status="unchanged" data-signature="array:in" data-from="caller" data-to="op" d="M 168 64 V 96" fill="none" stroke="#3B5B8C" stroke-width="1.2" marker-end="url(#d-01-numpy-vs-jax-immutability-numpy-vs-jax-arrow)"/>
+          <path data-kind="relationship" data-object-id="r2" data-status="rewired" data-signature="index-target" data-from="op" data-to="inplace" d="M 168 160 V 192" fill="none" stroke="#3B5B8C" stroke-width="1.2" stroke-dasharray="8 3 2 3" marker-end="url(#d-01-numpy-vs-jax-immutability-numpy-vs-jax-arrow)"/>
+          <path data-kind="relationship" data-object-id="r3" data-status="removed" data-signature="alias-overwrite" data-from="inplace" data-to="buffer" d="M 168 256 V 304" fill="none" stroke="#3B5B8C" stroke-width="1.2" stroke-dasharray="4 4" marker-end="url(#d-01-numpy-vs-jax-immutability-numpy-vs-jax-arrow)"/>
+          <path data-kind="relationship" data-object-id="r5" data-status="unchanged" data-signature="return-array" data-from="buffer" data-to="result" d="M 168 368 V 416" fill="none" stroke="#3B5B8C" stroke-width="1.2" marker-end="url(#d-01-numpy-vs-jax-immutability-numpy-vs-jax-arrow)"/>
+
+          <rect x="176" y="72" width="96" height="16" rx="2" fill="#F7F6F2"/>
+          <text x="180" y="84" fill="#3B5B8C" font-size="8" font-family="'Geist Mono', monospace">r1 · INPUT</text>
+          <rect x="176" y="168" width="96" height="16" rx="2" fill="#F7F6F2"/>
+          <text x="180" y="180" fill="#3B5B8C" font-size="8" font-family="'Geist Mono', monospace">r2 · REWIRED</text>
+          <rect x="176" y="272" width="108" height="16" rx="2" fill="#F7F6F2"/>
+          <text x="180" y="284" fill="#3B5B8C" font-size="8" font-family="'Geist Mono', monospace">r3 · OVERWRITE</text>
+          <rect x="176" y="384" width="96" height="16" rx="2" fill="#F7F6F2"/>
+          <text x="180" y="396" fill="#3B5B8C" font-size="8" font-family="'Geist Mono', monospace">r5 · OUTPUT</text>
+
+          <g data-kind="component" data-object-id="caller" data-status="unchanged" data-signature="python:fn:v1">
+            <rect data-role="bounds" x="84" y="0" width="168" height="64" rx="6" fill="#EFECE6" stroke="#3B5B8C" stroke-width="1.2"/>
+            <text x="96" y="16" fill="#3B5B8C" font-size="7.5" font-family="'Geist Mono', monospace">= caller · UNCHANGED</text>
+            <text x="96" y="36" fill="#0F2547" font-size="12" font-family="'Geist', sans-serif" font-weight="600">Python Function</text>
+            <text x="96" y="52" fill="#3B5B8C" font-size="9" font-family="'Geist Mono', monospace">prices[8192, 32]</text>
+          </g>
+
+          <g data-kind="component" data-object-id="op" data-status="changed" data-signature="op:numpy:setitem">
+            <rect data-role="bounds" x="84" y="96" width="168" height="64" rx="6" fill="#c59216" fill-opacity="0.12" stroke="#C59216" stroke-width="1.4"/>
+            <path d="M 85 108 V 148" fill="none" stroke="#C59216" stroke-width="3"/>
+            <text x="96" y="112" fill="#9A6F0B" font-size="7.5" font-family="'Geist Mono', monospace">~ op · CHANGED</text>
+            <text x="96" y="132" fill="#0F2547" font-size="12" font-family="'Geist', sans-serif" font-weight="600">Index Assignment</text>
+            <text x="96" y="148" fill="#9A6F0B" font-size="9" font-family="'Geist Mono', monospace">arr[:, 0] = val</text>
+          </g>
+
+          <g data-kind="component" data-object-id="inplace" data-status="removed" data-signature="mut:aliasing:v1">
+            <rect data-role="bounds" x="84" y="192" width="168" height="64" rx="6" fill="#EFECE6" stroke="#3B5B8C" stroke-width="1.2" stroke-dasharray="4 4"/>
+            <text x="96" y="208" fill="#3B5B8C" font-size="7.5" font-family="'Geist Mono', monospace">− inplace · REMOVED</text>
+            <text x="96" y="228" fill="#0F2547" font-size="12" font-family="'Geist', sans-serif" font-weight="600">In-Place Side Effect</text>
+            <text x="96" y="244" fill="#3B5B8C" font-size="9" font-family="'Geist Mono', monospace">mutates caller refs</text>
+          </g>
+
+          <g data-kind="component" data-object-id="buffer" data-status="changed" data-signature="mem:cpu-ram">
+            <rect data-role="bounds" x="84" y="304" width="168" height="64" rx="6" fill="#EFECE6" stroke="#3B5B8C" stroke-width="1.2"/>
+            <path d="M 85 316 V 356" fill="none" stroke="#3B5B8C" stroke-width="3"/>
+            <text x="96" y="320" fill="#3B5B8C" font-size="7.5" font-family="'Geist Mono', monospace">~ buffer · CHANGED</text>
+            <text x="96" y="340" fill="#0F2547" font-size="12" font-family="'Geist', sans-serif" font-weight="600">Memory Buffer</text>
+            <text x="96" y="356" fill="#3B5B8C" font-size="9" font-family="'Geist Mono', monospace">host RAM · unfused</text>
+          </g>
+
+          <g data-kind="component" data-object-id="result" data-status="unchanged" data-signature="array:return:v1">
+            <rect data-role="bounds" x="84" y="416" width="168" height="64" rx="6" fill="#EFECE6" stroke="#3B5B8C" stroke-width="1.2"/>
+            <text x="96" y="432" fill="#3B5B8C" font-size="7.5" font-family="'Geist Mono', monospace">= result · UNCHANGED</text>
+            <text x="96" y="452" fill="#0F2547" font-size="12" font-family="'Geist', sans-serif" font-weight="600">Portfolio Returns</text>
+            <text x="96" y="468" fill="#3B5B8C" font-size="9" font-family="'Geist Mono', monospace">float32[8192]</text>
+          </g>
+        </g>
+
+        <!-- Center Ledger -->
+        <text x="424" y="106" fill="#3B5B8C" font-size="9" font-family="'Geist Mono', monospace">01</text>
+        <text x="456" y="104" data-change="CHANGED" data-target="op" fill="#9A6F0B" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">CHANGED · op<tspan x="456" y="126" fill="#0F2547" font-size="11.5" font-family="'Geist', sans-serif" letter-spacing="0">arr[:, 0] = v → pure arr.at[:, 0].set(v)</tspan></text>
+        <path d="M 456 142 H 776" stroke="#0f2547" stroke-opacity="0.14" stroke-width="0.8"/>
+
+        <text x="424" y="166" fill="#3B5B8C" font-size="9" font-family="'Geist Mono', monospace">02</text>
+        <text x="456" y="164" data-change="REMOVED" data-target="inplace" fill="#3B5B8C" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">REMOVED · inplace<tspan x="456" y="186" fill="#0F2547" font-size="11.5" font-family="'Geist', sans-serif" letter-spacing="0">Forbid shared-pointer mutation &amp; race hazards</tspan></text>
+        <path d="M 456 202 H 776" stroke="#0f2547" stroke-opacity="0.14" stroke-width="0.8"/>
+
+        <text x="424" y="226" fill="#3B5B8C" font-size="9" font-family="'Geist Mono', monospace">03</text>
+        <text x="456" y="224" data-change="ADDED" data-target="scatter" fill="#9A6F0B" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">ADDED · scatter<tspan x="456" y="246" fill="#0F2547" font-size="11.5" font-family="'Geist', sans-serif" letter-spacing="0">Lower pure update to StableHLO scatter op</tspan></text>
+        <path d="M 456 262 H 776" stroke="#0f2547" stroke-opacity="0.14" stroke-width="0.8"/>
+
+        <text x="424" y="286" fill="#3B5B8C" font-size="9" font-family="'Geist Mono', monospace">04</text>
+        <text x="456" y="284" data-change="CHANGED" data-target="buffer" fill="#3B5B8C" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">CHANGED · buffer<tspan x="456" y="306" fill="#0F2547" font-size="11.5" font-family="'Geist', sans-serif" letter-spacing="0">Host RAM → fused PJRT accelerator buffer</tspan></text>
+        <path d="M 456 322 H 776" stroke="#0f2547" stroke-opacity="0.14" stroke-width="0.8"/>
+
+        <text x="424" y="346" fill="#3B5B8C" font-size="9" font-family="'Geist Mono', monospace">05</text>
+        <text x="456" y="344" data-change="REWIRED" data-target="r2" fill="#3B5B8C" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">REWIRED · r2<tspan x="456" y="366" fill="#0F2547" font-size="11.5" font-family="'Geist', sans-serif" letter-spacing="0">Route index update into pure XLA scatter</tspan></text>
+        <path d="M 456 382 H 776" stroke="#0f2547" stroke-opacity="0.14" stroke-width="0.8"/>
+
+        <text x="424" y="406" fill="#3B5B8C" font-size="9" font-family="'Geist Mono', monospace">06</text>
+        <text x="456" y="404" data-change="REMOVED" data-target="r3" fill="#3B5B8C" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">REMOVED · r3<tspan x="456" y="426" fill="#0F2547" font-size="11.5" font-family="'Geist', sans-serif" letter-spacing="0">Eliminate aliased in-place memory overwrite</tspan></text>
+        <path d="M 456 442 H 776" stroke="#0f2547" stroke-opacity="0.14" stroke-width="0.8"/>
+
+        <text x="424" y="466" fill="#3B5B8C" font-size="9" font-family="'Geist Mono', monospace">07</text>
+        <text x="456" y="464" data-change="ADDED" data-target="r4" fill="#3B5B8C" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">ADDED · r4<tspan x="456" y="486" fill="#0F2547" font-size="11.5" font-family="'Geist', sans-serif" letter-spacing="0">Emit fused PJRT buffer (input preserved)</tspan></text>
+
+        <text x="424" y="536" fill="#3B5B8C" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">PRESERVED</text>
+        <text x="424" y="554" fill="#3B5B8C" font-size="11" font-family="'Geist', sans-serif">Python function · Portfolio returns · r1 · r5</text>
+
+        <g data-snapshot="after" transform="translate(840 88)" data-grid="336 480 4">
+          <path data-kind="relationship" data-object-id="r1" data-status="unchanged" data-signature="array:in" data-from="caller" data-to="op" d="M 168 64 V 96" fill="none" stroke="#3B5B8C" stroke-width="1.2" marker-end="url(#d-01-numpy-vs-jax-immutability-numpy-vs-jax-arrow)"/>
+          <path data-kind="relationship" data-object-id="r2" data-status="rewired" data-signature="index-target" data-from="op" data-to="scatter" d="M 168 160 V 192" fill="none" stroke="#3B5B8C" stroke-width="1.2" stroke-dasharray="8 3 2 3" marker-end="url(#d-01-numpy-vs-jax-immutability-numpy-vs-jax-arrow)"/>
+          <path data-kind="relationship" data-object-id="r4" data-status="added" data-signature="pure-buffer" data-from="scatter" data-to="buffer" d="M 168 256 V 304" fill="none" stroke="#3B5B8C" stroke-width="2" marker-end="url(#d-01-numpy-vs-jax-immutability-numpy-vs-jax-arrow)"/>
+          <path data-kind="relationship" data-object-id="r5" data-status="unchanged" data-signature="return-array" data-from="buffer" data-to="result" d="M 168 368 V 416" fill="none" stroke="#3B5B8C" stroke-width="1.2" marker-end="url(#d-01-numpy-vs-jax-immutability-numpy-vs-jax-arrow)"/>
+
+          <rect x="176" y="72" width="96" height="16" rx="2" fill="#F7F6F2"/>
+          <text x="180" y="84" fill="#3B5B8C" font-size="8" font-family="'Geist Mono', monospace">r1 · INPUT</text>
+          <rect x="176" y="168" width="96" height="16" rx="2" fill="#F7F6F2"/>
+          <text x="180" y="180" fill="#3B5B8C" font-size="8" font-family="'Geist Mono', monospace">r2 · PURE IR</text>
+          <rect x="176" y="272" width="108" height="16" rx="2" fill="#F7F6F2"/>
+          <text x="180" y="284" fill="#3B5B8C" font-size="8" font-family="'Geist Mono', monospace">r4 · FUSED OPS</text>
+          <rect x="176" y="384" width="96" height="16" rx="2" fill="#F7F6F2"/>
+          <text x="180" y="396" fill="#3B5B8C" font-size="8" font-family="'Geist Mono', monospace">r5 · OUTPUT</text>
+
+          <g data-kind="component" data-object-id="caller" data-status="unchanged" data-signature="python:fn:v1">
+            <rect data-role="bounds" x="84" y="0" width="168" height="64" rx="6" fill="#EFECE6" stroke="#3B5B8C" stroke-width="1.2"/>
+            <text x="96" y="16" fill="#3B5B8C" font-size="7.5" font-family="'Geist Mono', monospace">= caller · UNCHANGED</text>
+            <text x="96" y="36" fill="#0F2547" font-size="12" font-family="'Geist', sans-serif" font-weight="600">Python Function</text>
+            <text x="96" y="52" fill="#3B5B8C" font-size="9" font-family="'Geist Mono', monospace">prices[8192, 32]</text>
+          </g>
+
+          <g data-kind="component" data-object-id="op" data-status="changed" data-signature="op:jax:at-set">
+            <rect data-role="bounds" x="84" y="96" width="168" height="64" rx="6" fill="#EFECE6" stroke="#3B5B8C" stroke-width="1.2"/>
+            <path d="M 85 108 V 148" fill="none" stroke="#3B5B8C" stroke-width="3"/>
+            <text x="96" y="112" fill="#3B5B8C" font-size="7.5" font-family="'Geist Mono', monospace">~ op · CHANGED</text>
+            <text x="96" y="132" fill="#0F2547" font-size="12" font-family="'Geist', sans-serif" font-weight="600">Index Assignment</text>
+            <text x="96" y="148" fill="#3B5B8C" font-size="9" font-family="'Geist Mono', monospace">arr.at[:, 0].set(val)</text>
+          </g>
+
+          <g data-kind="component" data-object-id="scatter" data-status="added" data-signature="xla:scatter:v1">
+            <rect data-role="bounds" x="84" y="192" width="168" height="64" rx="6" fill="#c59216" fill-opacity="0.12" stroke="#C59216" stroke-width="1.4"/>
+            <rect x="88" y="196" width="160" height="56" rx="4" fill="none" stroke="#C59216" stroke-width="0.8"/>
+            <text x="96" y="208" fill="#9A6F0B" font-size="7.5" font-family="'Geist Mono', monospace">+ scatter · ADDED</text>
+            <text x="96" y="228" fill="#0F2547" font-size="12" font-family="'Geist', sans-serif" font-weight="600">XLA Pure Scatter</text>
+            <text x="96" y="244" fill="#9A6F0B" font-size="9" font-family="'Geist Mono', monospace">zero aliasing · fused</text>
+          </g>
+
+          <g data-kind="component" data-object-id="buffer" data-status="changed" data-signature="mem:pjrt-buffer">
+            <rect data-role="bounds" x="84" y="304" width="168" height="64" rx="6" fill="#EFECE6" stroke="#3B5B8C" stroke-width="1.2"/>
+            <path d="M 85 316 V 356" fill="none" stroke="#3B5B8C" stroke-width="3"/>
+            <text x="96" y="320" fill="#3B5B8C" font-size="7.5" font-family="'Geist Mono', monospace">~ buffer · CHANGED</text>
+            <text x="96" y="340" fill="#0F2547" font-size="12" font-family="'Geist', sans-serif" font-weight="600">Memory Buffer</text>
+            <text x="96" y="356" fill="#3B5B8C" font-size="9" font-family="'Geist Mono', monospace">PJRT buffer · 19x</text>
+          </g>
+
+          <g data-kind="component" data-object-id="result" data-status="unchanged" data-signature="array:return:v1">
+            <rect data-role="bounds" x="84" y="416" width="168" height="64" rx="6" fill="#EFECE6" stroke="#3B5B8C" stroke-width="1.2"/>
+            <text x="96" y="432" fill="#3B5B8C" font-size="7.5" font-family="'Geist Mono', monospace">= result · UNCHANGED</text>
+            <text x="96" y="452" fill="#0F2547" font-size="12" font-family="'Geist', sans-serif" font-weight="600">Portfolio Returns</text>
+            <text x="96" y="468" fill="#3B5B8C" font-size="9" font-family="'Geist Mono', monospace">float32[8192]</text>
+          </g>
+        </g>
+
+        <path d="M 24 592 H 1176" stroke="#0f2547" stroke-opacity="0.14" stroke-width="1"/>
+        <rect x="24" y="608" width="20" height="16" rx="3" fill="none" stroke="#3B5B8C" stroke-width="1"/>
+        <text x="54" y="620" fill="#3B5B8C" font-size="11" font-family="'Geist', sans-serif">= Unchanged</text>
+        <rect x="210" y="608" width="20" height="16" rx="3" fill="#c59216" fill-opacity="0.12" stroke="#C59216" stroke-width="1.2"/>
+        <text x="240" y="620" fill="#9A6F0B" font-size="11" font-family="'Geist', sans-serif">+ Added (Focal)</text>
+        <rect x="420" y="608" width="20" height="16" rx="3" fill="none" stroke="#3B5B8C" stroke-width="1" stroke-dasharray="4 4"/>
+        <text x="450" y="620" fill="#3B5B8C" font-size="11" font-family="'Geist', sans-serif">− Removed</text>
+        <rect x="612" y="608" width="20" height="16" rx="3" fill="none" stroke="#3B5B8C" stroke-width="1"/>
+        <path d="M 613 612 V 620" stroke="#3B5B8C" stroke-width="3"/>
+        <text x="642" y="620" fill="#3B5B8C" font-size="11" font-family="'Geist', sans-serif">~ Changed</text>
+        <path d="M 820 616 H 844" fill="none" stroke="#3B5B8C" stroke-width="1.2" stroke-dasharray="8 3 2 3" marker-end="url(#d-01-numpy-vs-jax-immutability-numpy-vs-jax-arrow)"/>
+        <text x="854" y="620" fill="#3B5B8C" font-size="11" font-family="'Geist', sans-serif">⇢ Rewired</text>
+        <text x="1176" y="644" fill="#3B5B8C" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end">6 components · 5 relationships · 7 changes</text>
+      </svg>
