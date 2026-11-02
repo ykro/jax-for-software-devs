@@ -149,10 +149,11 @@ make all
 
 ### 4. Ejecución on-demand con auto-teardown en Google Cloud (Cloud TPU v5e o NVIDIA L4 GPU)
 
-El script `gcp/run_on_demand_benchmark.sh` aprovisiona instancias on-demand con auto-teardown en el proyecto `ai-experiments-487722` y garantiza la limpieza automática de los recursos mediante `trap cleanup EXIT INT TERM`.
+El script `gcp/run_on_demand_benchmark.sh` aprovisiona instancias on-demand con auto-teardown en tu propio proyecto de Google Cloud (variable `GCP_PROJECT_ID`) y garantiza la limpieza automática de los recursos mediante `trap cleanup EXIT INT TERM`.
 
 ```bash
 # Ejecutar benchmark en una instancia on-demand de Cloud TPU v5e-1 (us-central1-a)
+export GCP_PROJECT_ID=<tu-proyecto>
 make gcp-tpu
 
 # Ejecutar benchmark en un Vertex AI Custom Job on-demand con GPU NVIDIA L4
