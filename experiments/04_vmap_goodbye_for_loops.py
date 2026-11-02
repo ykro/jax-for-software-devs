@@ -10,7 +10,9 @@ Demonstrates:
 
 from __future__ import annotations
 
+import statistics
 import time
+from collections.abc import Callable
 from typing import Any
 
 import jax
@@ -38,6 +40,16 @@ def score_single_transaction(
 batch_score_transactions = jax.jit(
     jax.vmap(score_single_transaction, in_axes=(0, None, None))
 )
+
+
+def _median_ms(fn: Callable[[], Any], n_iters: int) -> float:
+    """Median wall time of `fn()` in ms (robust to noisy neighbours on a shared machine)."""
+    times = []
+    for _ in range(n_iters):
+        t0 = time.perf_counter()
+        fn()
+        times.append((time.perf_counter() - t0) * 1000.0)
+    return statistics.median(times)
 
 
 def python_for_loop_scoring(
@@ -84,17 +96,14 @@ def run_benchmark(
 
     max_diff = float(np.max(np.abs(scores_loop - np.asarray(scores_vmap))))
 
-    # Measure Python for-loop
-    t0 = time.perf_counter()
-    for _ in range(n_iters_loop):
-        _ = python_for_loop_scoring(batch_tx_np, ref_np, risk_mat_np)
-    for_loop_ms = ((time.perf_counter() - t0) / n_iters_loop) * 1000.0
-
-    # Measure compiled jax.vmap
-    t0 = time.perf_counter()
-    for _ in range(n_iters_vmap):
-        _ = batch_score_transactions(batch_tx_jax, ref_jax, risk_mat_jax).block_until_ready()
-    vmap_ms = ((time.perf_counter() - t0) / n_iters_vmap) * 1000.0
+    # Median per-call time: Python for-loop vs compiled jax.vmap
+    for_loop_ms = _median_ms(
+        lambda: python_for_loop_scoring(batch_tx_np, ref_np, risk_mat_np), n_iters_loop
+    )
+    vmap_ms = _median_ms(
+        lambda: batch_score_transactions(batch_tx_jax, ref_jax, risk_mat_jax).block_until_ready(),
+        n_iters_vmap,
+    )
 
     speedup = for_loop_ms / vmap_ms
 
@@ -118,8 +127,8 @@ def main() -> None:
     print(f"Backend Device                : {res['backend']}")
     print(f"Batch Size & Feature Dim      : ({res['batch_size']}, {res['feature_dim']}) float32")
     print("-" * 72)
-    print(f"Python for-loop Avg Time      : {res['for_loop_ms']:.4f} ms")
-    print(f"JAX @jit(vmap(f)) Avg Time    : {res['vmap_ms'] if 'vmap_ms' in res else res['vmap_jit_ms']:.4f} ms")
+    print(f"Python for-loop Median Time   : {res['for_loop_ms']:.4f} ms")
+    print(f"JAX @jit(vmap(f)) Median Time : {res['vmap_jit_ms']:.4f} ms")
     print(f"Speedup vs Python for-loop    : {res['speedup']:.2f}x")
     print(f"Max |for-loop - vmap|         : {res['max_diff']:.2e}")
 

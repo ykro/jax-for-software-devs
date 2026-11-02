@@ -1,5 +1,7 @@
 """Experiment 02: How @jax.jit Thinks (Tracing vs Execution).
 
+Run with `--show-ir` to also print the Jaxpr and the head of the StableHLO module.
+
 Demonstrates:
 1. Why Python side effects inside `@jax.jit` only execute once per `(shape, dtype)`
    during `ShapedArray` tracing.
@@ -11,6 +13,8 @@ Demonstrates:
 
 from __future__ import annotations
 
+import statistics
+import sys
 import time
 from typing import Any
 
@@ -55,17 +59,9 @@ def run_experiment(n_elements: int = 65536, n_iters: int = 150) -> dict[str, Any
     _ = signal_filter(x_other_shape, thresh).block_until_ready()
     trace_count_after_new_shape = len(trace_log)
 
-    # Inspect Jaxpr and StableHLO (without triggering trace_log side effect again)
-    closed_jaxpr = jax.make_jaxpr(
-         lambda a, b: jnp.tanh(
-             jnp.where(
-                 jnp.abs((a - jnp.mean(a)) * jax.lax.rsqrt(jnp.var(a) + 1e-5)) > b,
-                 jnp.sign((a - jnp.mean(a)) * jax.lax.rsqrt(jnp.var(a) + 1e-5)) * b,
-                 (a - jnp.mean(a)) * jax.lax.rsqrt(jnp.var(a) + 1e-5),
-             )
-         )
-         + 0.1 * ((a - jnp.mean(a)) * jax.lax.rsqrt(jnp.var(a) + 1e-5))
-    )(x1, thresh)
+    # Inspect the Jaxpr of the very same function. make_jaxpr traces it once more, so the
+    # trace_log side effect fires again; the counts above were already captured.
+    closed_jaxpr = jax.make_jaxpr(raw_signal_filter)(x1, thresh)
     num_jaxpr_eqns = len(closed_jaxpr.jaxpr.eqns)
     lowered = signal_filter.lower(x1, thresh)
     stablehlo_text = lowered.as_text("stablehlo")
@@ -97,15 +93,16 @@ def run_experiment(n_elements: int = 65536, n_iters: int = 150) -> dict[str, Any
     y_np = numpy_signal_filter(x1_np, 1.75)
     max_diff = float(np.max(np.abs(y_np - np.asarray(y1))))
 
-    t0 = time.perf_counter()
-    for _ in range(n_iters):
-        _ = numpy_signal_filter(x1_np, 1.75)
-    numpy_ms = ((time.perf_counter() - t0) / n_iters) * 1000.0
+    def median_ms(fn: Any) -> float:
+        times = []
+        for _ in range(n_iters):
+            t0 = time.perf_counter()
+            fn()
+            times.append((time.perf_counter() - t0) * 1000.0)
+        return statistics.median(times)
 
-    t0 = time.perf_counter()
-    for _ in range(n_iters):
-        _ = signal_filter(x1, thresh).block_until_ready()
-    cached_jit_ms = ((time.perf_counter() - t0) / n_iters) * 1000.0
+    numpy_ms = median_ms(lambda: numpy_signal_filter(x1_np, 1.75))
+    cached_jit_ms = median_ms(lambda: signal_filter(x1, thresh).block_until_ready())
 
     speedup = numpy_ms / cached_jit_ms
 
@@ -124,10 +121,13 @@ def run_experiment(n_elements: int = 65536, n_iters: int = 150) -> dict[str, Any
         "max_diff": max_diff,
         "lax_cond_l2_norm": round(l2_norm_check, 5),
         "lax_cond_linf_max": round(linf_max_check, 5),
+        "jaxpr_text": str(closed_jaxpr),
+        "stablehlo_text": stablehlo_text,
     }
 
 
 def main() -> None:
+    show_ir = "--show-ir" in sys.argv[1:]
     res = run_experiment()
     print("=" * 72)
     print("Experiment 02: How @jax.jit Thinks (Tracing vs Cached Execution)")
@@ -147,10 +147,19 @@ def main() -> None:
     )
     print("-" * 72)
     print(f"1st Call (Trace + XLA Compile)   : {res['first_call_compile_ms']:.3f} ms")
-    print(f"NumPy Eager Avg Time             : {res['numpy_ms']:.4f} ms")
-    print(f"Cached @jit Execution Avg Time   : {res['cached_jit_ms']:.4f} ms")
+    print(f"NumPy Eager Median Time          : {res['numpy_ms']:.4f} ms")
+    print(f"Cached @jit Median Time          : {res['cached_jit_ms']:.4f} ms")
     print(f"Speedup (Cached @jit vs NumPy)   : {res['speedup']:.2f}x")
     print(f"Max |NumPy - JAX @jit|           : {res['max_diff']:.2e}")
+    if show_ir:
+        print("=" * 72)
+        print(f"Jaxpr ({res['jaxpr_num_equations']} equations)")
+        print("=" * 72)
+        print(res["jaxpr_text"])
+        print("=" * 72)
+        print(f"StableHLO (first 14 of {res['stablehlo_lines']} lines)")
+        print("=" * 72)
+        print("\n".join(res["stablehlo_text"].strip().splitlines()[:14]))
 
 
 if __name__ == "__main__":

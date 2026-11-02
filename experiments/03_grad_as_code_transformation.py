@@ -11,7 +11,9 @@ Demonstrates:
 
 from __future__ import annotations
 
+import statistics
 import time
+from collections.abc import Callable
 from typing import Any
 
 import jax
@@ -64,6 +66,16 @@ def finite_difference_grad(
 loss_and_grad_fn = jax.jit(jax.value_and_grad(sensor_calibration_loss))
 
 
+def _median_ms(fn: Callable[[], Any], n_iters: int) -> float:
+    """Median wall time of `fn()` in ms (robust to noisy neighbours on a shared machine)."""
+    times = []
+    for _ in range(n_iters):
+        t0 = time.perf_counter()
+        fn()
+        times.append((time.perf_counter() - t0) * 1000.0)
+    return statistics.median(times)
+
+
 @jax.jit
 def calibration_step(
     params: jax.Array,
@@ -105,17 +117,14 @@ def run_benchmark(
     fd_grad = finite_difference_grad(init_params_np, features_np, targets_np, eps=1e-3)
     grad_max_diff = float(np.max(np.abs(fd_grad - np.asarray(exact_grad))))
 
-    # Benchmark finite differences vs jax.jit(jax.value_and_grad)
-    t0 = time.perf_counter()
-    for _ in range(n_iters):
-        _ = finite_difference_grad(init_params_np, features_np, targets_np, eps=1e-3)
-    fd_ms = ((time.perf_counter() - t0) / n_iters) * 1000.0
-
-    t0 = time.perf_counter()
-    for _ in range(n_iters):
-        _, g = loss_and_grad_fn(init_params_jax, features_jax, targets_jax)
-        g.block_until_ready()
-    autodiff_ms = ((time.perf_counter() - t0) / n_iters) * 1000.0
+    # Benchmark finite differences vs jax.jit(jax.value_and_grad) (median per call)
+    fd_ms = _median_ms(
+        lambda: finite_difference_grad(init_params_np, features_np, targets_np, eps=1e-3), n_iters
+    )
+    autodiff_ms = _median_ms(
+        lambda: loss_and_grad_fn(init_params_jax, features_jax, targets_jax)[1].block_until_ready(),
+        n_iters,
+    )
 
     speedup = fd_ms / autodiff_ms
 

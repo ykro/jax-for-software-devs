@@ -31,15 +31,15 @@ En lugar de programar derivadas manuales o `for-loops` para recorrer un `batch`,
 
 ## Resultados Reales de Verificación (`verify_fundamentals.py`)
 
-Benchmarks deterministas ejecutados con Python `3.12.11`, JAX `0.12.0.1` y NumPy `2.5.4`:
+Benchmarks deterministas ejecutados con Python `3.12.11`, JAX `0.12.0.1` y NumPy `2.5.4` en CPU. Cada tiempo es la **mediana por llamada** (después de una llamada de calentamiento que compila), así una máquina con otros procesos corriendo no distorsiona tanto el resultado; el juez solo exige mínimos razonables de speedup y verifica de forma estricta la paridad numérica, el conteo de traces y el determinismo.
 
 | Experimento | Archivo | Baseline (NumPy / Eager / Loop) | JAX + OpenXLA | Speedup / Verificación |
 | :--- | :--- | :--- | :--- | :--- |
-| **01. `jnp` & `.at[].set()` Simulation** | `experiments/01_numpy_to_jax_arrays.py` | `3.9126 ms` (JAX Eager) / `5.8997 ms` (NumPy) | `0.2724 ms` (`@jax.jit`) | **14.36x** vs Eager / **21.66x** vs NumPy (`max_diff = 1.53e-05`) |
-| **02. `@jit` Tracing vs Cached Exec** | `experiments/02_jit_tracing_vs_execution.py` | `0.5089 ms` (NumPy Eager) | `0.0921 ms` (Cached `@jit`) | **5.53x** (`1 trace` para 3 llamadas con mismo `shape`) |
-| **03. `value_and_grad` vs Finite Diff** | `experiments/03_grad_as_code_transformation.py` | `1.6547 ms` (Finite Diff, 64 evals) | `0.0565 ms` (`@jit(value_and_grad)`) | **29.29x** (`loss` baja **376.48x** en 20 steps) |
-| **04. `vmap` Batch (10,000 records)** | `experiments/04_vmap_goodbye_for_loops.py` | `31.7093 ms` (Python `for-loop`) | `0.1466 ms` (`@jit(vmap)`) | **216.32x** (`max_diff = 1.19e-07`) |
-| **05. Parallel Threefry PRNG Keys** | `experiments/05_deterministic_prng_keys.py` | `408.6253 ms` (Sequential worker `loop`) | `8.6511 ms` (`@jit(vmap)` sobre 2048 keys) | **47.23x** (Orden-invariante, `Δ = 0.0`) |
+| **01. `jnp` & `.at[].set()` Simulation** | `experiments/01_numpy_to_jax_arrays.py` | `4.6996 ms` (JAX Eager) / `6.1456 ms` (NumPy) | `0.3412 ms` (`@jax.jit`) | **13.78x** vs Eager / **18.01x** vs NumPy (`max_diff = 1.53e-05`) |
+| **02. `@jit` Tracing vs Cached Exec** | `experiments/02_jit_tracing_vs_execution.py` | `0.5119 ms` (NumPy Eager) | `0.0992 ms` (Cached `@jit`) | **5.16x** (`1 trace` para 3 llamadas con mismo `shape`, `2` con un `shape` nuevo; Jaxpr de `15` ecuaciones, `61` líneas de StableHLO) |
+| **03. `value_and_grad` vs Finite Diff** | `experiments/03_grad_as_code_transformation.py` | `1.8646 ms` (Finite Diff, 64 evals) | `0.0576 ms` (`@jit(value_and_grad)`) | **32.39x** (`loss` baja **376.48x** en 20 steps) |
+| **04. `vmap` Batch (10,000 records)** | `experiments/04_vmap_goodbye_for_loops.py` | `33.2483 ms` (Python `for-loop`) | `0.1606 ms` (`@jit(vmap)`) | **207.02x** (`max_diff = 1.19e-07`) |
+| **05. Parallel Threefry PRNG Keys** | `experiments/05_deterministic_prng_keys.py` | `428.3968 ms` (`loop` secuencial completo, 2048 workers) | `9.0142 ms` (`@jit(vmap)` sobre 2048 keys) | **47.52x** (Orden-invariante, `Δ = 0.0`) |
 
 Salida íntegra de terminal generada por `verify_fundamentals.py`:
 
@@ -48,6 +48,19 @@ Salida íntegra de terminal generada por `verify_fundamentals.py`:
 THE OUTSIDE JUDGE — JAX for Software Devs Verification Report
 ==============================================================================
 Runtime : Python 3.12.11 | JAX 0.12.0.1 | NumPy 2.5.4 | Backend: cpu
+------------------------------------------------------------------------------
+Experiment                         | Baseline       | JAX/OpenXLA    | Speedup / Check
+------------------------------------------------------------------------------
+01. jnp & .at[].set() Simulation   | 4.6996 ms      | 0.3412 ms      | 13.78x (PASS)  
+02. @jit Tracing vs Cached Exec    | 0.5119 ms      | 0.0992 ms      | 5.16x (1 trace)
+03. value_and_grad vs Finite Diff  | 1.8646 ms      | 0.0576 ms      | 32.39x (PASS)  
+04. vmap Batch (10,000 records)    | 33.2483 ms     | 0.1606 ms      | 207.02x (PASS) 
+05. Parallel Threefry PRNG Keys    | 428.3968 ms    | 9.0142 ms      | 47.52x (Δ=0.0) 
+------------------------------------------------------------------------------
+Saved JSON report to: benchmarks/latest_results.json
+ALL DETERMINISTIC CHECKS PASSED.
+```
+
 ------------------------------------------------------------------------------
 Experiment                         | Baseline       | JAX/OpenXLA    | Speedup / Check
 ------------------------------------------------------------------------------
@@ -106,14 +119,15 @@ pip install -e ".[dev]"
 
 ### 2. Recorrido guiado por los 5 experimentos (Orden recomendado)
 
-Cada script toma menos de 2 segundos y explica un pilar del modelo mental de JAX para ingenieros de software:
+Cada script toma unos pocos segundos y explica un pilar del modelo mental de JAX para ingenieros de software:
 
 ```bash
 # Paso 1 — De numpy a jax.numpy, inmutabilidad y actualizaciones puras con .at[].set()
 python experiments/01_numpy_to_jax_arrays.py
 
 # Paso 2 — Cómo piensa @jax.jit: ShapedArray tracing, Jaxpr, StableHLO y condicionales
-python experiments/02_jit_tracing_vs_execution.py
+# (--show-ir imprime además el Jaxpr completo y el inicio del módulo StableHLO)
+python experiments/02_jit_tracing_vs_execution.py --show-ir
 
 # Paso 3 — jax.grad como transformación de código: calibración de sensores vs diferencias finitas
 python experiments/03_grad_as_code_transformation.py

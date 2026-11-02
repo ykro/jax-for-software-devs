@@ -18,11 +18,11 @@
       ],
       "immutability_error_raised": true,
       "original_unmodified": true,
-      "numpy_ms": 5.8997,
-      "jax_eager_ms": 3.9126,
-      "jax_jit_ms": 0.2724,
-      "speedup_vs_numpy": 21.66,
-      "speedup_vs_eager": 14.36,
+      "numpy_ms": 6.1456,
+      "jax_eager_ms": 4.6996,
+      "jax_jit_ms": 0.3412,
+      "speedup_vs_numpy": 18.01,
+      "speedup_vs_eager": 13.78,
       "max_diff_np_jit": 1.52587890625e-05,
       "max_diff_eager_jit": 1.52587890625e-05
     },
@@ -32,12 +32,12 @@
       "n_elements": 65536,
       "trace_count_for_3_same_shape_calls": 1,
       "trace_count_after_new_shape": 2,
-      "jaxpr_num_equations": 36,
+      "jaxpr_num_equations": 15,
       "stablehlo_lines": 61,
-      "first_call_compile_ms": 33.924,
-      "numpy_ms": 0.5089,
-      "cached_jit_ms": 0.0921,
-      "speedup": 5.53,
+      "first_call_compile_ms": 36.807,
+      "numpy_ms": 0.5119,
+      "cached_jit_ms": 0.0992,
+      "speedup": 5.16,
       "max_diff": 2.384185791015625e-07,
       "lax_cond_l2_norm": 1.0,
       "lax_cond_linf_max": 1.0
@@ -52,18 +52,18 @@
       "final_loss": 0.000519,
       "loss_reduction_ratio": 376.48,
       "grad_max_diff_vs_finite_diff": 1.2359581887722015e-05,
-      "finite_diff_ms": 1.6547,
-      "jax_value_and_grad_ms": 0.0565,
-      "speedup": 29.29
+      "finite_diff_ms": 1.8646,
+      "jax_value_and_grad_ms": 0.0576,
+      "speedup": 32.39
     },
     "04_vmap_goodbye_for_loops": {
       "experiment": "04_vmap_goodbye_for_loops",
       "backend": "cpu",
       "batch_size": 10000,
       "feature_dim": 16,
-      "for_loop_ms": 31.7093,
-      "vmap_jit_ms": 0.1466,
-      "speedup": 216.32,
+      "for_loop_ms": 33.2483,
+      "vmap_jit_ms": 0.1606,
+      "speedup": 207.02,
       "max_diff": 1.1920928955078125e-07
     },
     "05_deterministic_prng_keys": {
@@ -75,9 +75,9 @@
       "bitwise_order_invariant": true,
       "max_diff_forward_reversed": 0.0,
       "max_diff_sequential_vmap": 1.1920928955078125e-07,
-      "sequential_loop_ms": 408.6253,
-      "vmap_parallel_ms": 8.6511,
-      "speedup": 47.23
+      "sequential_loop_ms": 428.3968,
+      "vmap_parallel_ms": 9.0142,
+      "speedup": 47.52
     }
   },
   "all_verifications_passed": true

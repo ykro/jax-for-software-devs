@@ -12,7 +12,9 @@ Demonstrates:
 
 from __future__ import annotations
 
+import statistics
 import time
+from collections.abc import Callable
 from typing import Any
 
 import jax
@@ -54,6 +56,16 @@ def jax_portfolio_simulation(
 jax_jit_portfolio_simulation = jax.jit(jax_portfolio_simulation)
 
 
+def _median_ms(fn: Callable[[], Any], n_iters: int) -> float:
+    """Median wall time of `fn()` in ms (robust to noisy neighbours on a shared machine)."""
+    times = []
+    for _ in range(n_iters):
+        t0 = time.perf_counter()
+        fn()
+        times.append((time.perf_counter() - t0) * 1000.0)
+    return statistics.median(times)
+
+
 def run_benchmark(
     n_paths: int = 8192,
     n_assets: int = 32,
@@ -89,23 +101,16 @@ def run_benchmark(
     max_diff_np_jit = float(np.max(np.abs(out_np - np.asarray(out_jit))))
     max_diff_eager_jit = float(jnp.max(jnp.abs(out_eager - out_jit)))
 
-    # Measure NumPy
-    t0 = time.perf_counter()
-    for _ in range(n_iters):
-        _ = numpy_portfolio_simulation(prices_np, weights_np, shocks_np)
-    numpy_ms = ((time.perf_counter() - t0) / n_iters) * 1000.0
-
-    # Measure JAX Eager
-    t0 = time.perf_counter()
-    for _ in range(n_iters):
-        _ = jax_portfolio_simulation(prices_jax, weights_jax, shocks_jax).block_until_ready()
-    jax_eager_ms = ((time.perf_counter() - t0) / n_iters) * 1000.0
-
-    # Measure JAX @jit
-    t0 = time.perf_counter()
-    for _ in range(n_iters):
-        _ = jax_jit_portfolio_simulation(prices_jax, weights_jax, shocks_jax).block_until_ready()
-    jax_jit_ms = ((time.perf_counter() - t0) / n_iters) * 1000.0
+    # Median per-call time of each implementation
+    numpy_args = (prices_np, weights_np, shocks_np)
+    jax_args = (prices_jax, weights_jax, shocks_jax)
+    numpy_ms = _median_ms(lambda: numpy_portfolio_simulation(*numpy_args), n_iters)
+    jax_eager_ms = _median_ms(
+        lambda: jax_portfolio_simulation(*jax_args).block_until_ready(), n_iters
+    )
+    jax_jit_ms = _median_ms(
+        lambda: jax_jit_portfolio_simulation(*jax_args).block_until_ready(), n_iters
+    )
 
     speedup_vs_numpy = numpy_ms / jax_jit_ms
     speedup_vs_eager = jax_eager_ms / jax_jit_ms
@@ -136,9 +141,9 @@ def main() -> None:
     print(f"In-Place Mutation Blocked  : {res['immutability_error_raised']} (TypeError raised)")
     print(f".at[].set() Pure Semantics : {res['original_unmodified']} (input buffer untouched)")
     print("-" * 72)
-    print(f"NumPy Vectorized Avg Time  : {res['numpy_ms']:.4f} ms")
-    print(f"JAX Eager Avg Time         : {res['jax_eager_ms']:.4f} ms")
-    print(f"JAX @jit Fused Avg Time    : {res['jax_jit_ms']:.4f} ms")
+    print(f"NumPy Median Time          : {res['numpy_ms']:.4f} ms")
+    print(f"JAX Eager Median Time      : {res['jax_eager_ms']:.4f} ms")
+    print(f"JAX @jit Fused Median Time : {res['jax_jit_ms']:.4f} ms")
     print(f"Speedup vs NumPy           : {res['speedup_vs_numpy']:.2f}x")
     print(f"Speedup vs JAX Eager       : {res['speedup_vs_eager']:.2f}x")
     print(f"Max |NumPy - JAX @jit|     : {res['max_diff_np_jit']:.2e}")

@@ -13,6 +13,7 @@ Demonstrates:
 
 from __future__ import annotations
 
+import statistics
 import time
 from typing import Any
 
@@ -32,7 +33,7 @@ def simulate_worker_rollout(worker_key: jax.Array) -> jax.Array:
 parallel_worker_rollouts = jax.jit(jax.vmap(simulate_worker_rollout))
 
 
-def run_experiment(n_workers: int = 2048, n_iters: int = 100) -> dict[str, Any]:
+def run_experiment(n_workers: int = 2048, n_iters: int = 100, repeats: int = 3) -> dict[str, Any]:
     """Verify PRNG key splitting semantics, order invariance, and parallel vmap speedup."""
     master_key = jax.random.key(42)
 
@@ -65,20 +66,26 @@ def run_experiment(n_workers: int = 2048, n_iters: int = 100) -> dict[str, Any]:
     max_diff_sequential_vmap = float(jnp.max(jnp.abs(seq_forward - vmap_subset)))
     bitwise_order_invariant = bool(max_diff_forward_reversed == 0.0)
 
-    # 3. Benchmark sequential Python loop over N workers vs parallel vmap over N keys
-    # Measure 64-worker loop and scale linearly to n_workers to keep runtime < 1s
-    t0 = time.perf_counter()
-    for i in range(subset):
-        _ = simulate_worker_rollout(sub_keys[i]).block_until_ready()
-    loop_subset_ms = (time.perf_counter() - t0) * 1000.0
-    estimated_full_loop_ms = loop_subset_ms * (n_workers / subset)
+    # 3. Benchmark the full sequential Python loop over N workers vs parallel vmap over N keys
+    def sequential_loop() -> None:
+        for i in range(n_workers):
+            simulate_worker_rollout(worker_keys[i]).block_until_ready()
 
-    t0 = time.perf_counter()
+    loop_times = []
+    for _ in range(repeats):
+        t0 = time.perf_counter()
+        sequential_loop()
+        loop_times.append((time.perf_counter() - t0) * 1000.0)
+    sequential_loop_ms = statistics.median(loop_times)
+
+    vmap_times = []
     for _ in range(n_iters):
-        _ = parallel_worker_rollouts(worker_keys).block_until_ready()
-    vmap_parallel_ms = ((time.perf_counter() - t0) / n_iters) * 1000.0
+        t0 = time.perf_counter()
+        parallel_worker_rollouts(worker_keys).block_until_ready()
+        vmap_times.append((time.perf_counter() - t0) * 1000.0)
+    vmap_parallel_ms = statistics.median(vmap_times)
 
-    speedup = estimated_full_loop_ms / vmap_parallel_ms
+    speedup = sequential_loop_ms / vmap_parallel_ms
 
     return {
         "experiment": "05_deterministic_prng_keys",
@@ -89,7 +96,7 @@ def run_experiment(n_workers: int = 2048, n_iters: int = 100) -> dict[str, Any]:
         "bitwise_order_invariant": bitwise_order_invariant,
         "max_diff_forward_reversed": max_diff_forward_reversed,
         "max_diff_sequential_vmap": max_diff_sequential_vmap,
-        "sequential_loop_ms": round(estimated_full_loop_ms, 4),
+        "sequential_loop_ms": round(sequential_loop_ms, 4),
         "vmap_parallel_ms": round(vmap_parallel_ms, 4),
         "speedup": round(speedup, 2),
     }
@@ -107,7 +114,7 @@ def main() -> None:
     print(f"Order-Invariant (Fwd vs Reversed)  : {res['bitwise_order_invariant']} (diff={res['max_diff_forward_reversed']:.2e})")
     print(f"Max |Sequential - Parallel vmap|   : {res['max_diff_sequential_vmap']:.2e}")
     print("-" * 72)
-    print(f"Sequential Worker Loop Time (est.) : {res['sequential_loop_ms']:.4f} ms")
+    print(f"Sequential Worker Loop Time        : {res['sequential_loop_ms']:.4f} ms")
     print(f"Parallel @jit(vmap) PRNG Time      : {res['vmap_parallel_ms']:.4f} ms")
     print(f"Speedup (Parallel vmap vs Loop)    : {res['speedup']:.2f}x")
 

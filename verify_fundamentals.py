@@ -28,6 +28,9 @@ def run_all_verifications() -> dict[str, Any]:
     """Run all 5 experiments and enforce deterministic verification assertions."""
     r01 = exp01.run_benchmark()
     r02 = exp02.run_experiment()
+    # Keep the JSON report compact: the IR dumps are printed by `02_*.py --show-ir`
+    r02.pop("jaxpr_text", None)
+    r02.pop("stablehlo_text", None)
     r03 = exp03.run_benchmark()
     r04 = exp04.run_benchmark()
     r05 = exp05.run_experiment()

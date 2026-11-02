@@ -26,6 +26,8 @@ def test_02_jit_tracing_vs_execution() -> None:
     assert res["trace_count_after_new_shape"] == 2
     assert res["jaxpr_num_equations"] >= 10
     assert res["stablehlo_lines"] >= 15
+    assert "tanh" in res["jaxpr_text"]
+    assert "stablehlo" in res["stablehlo_text"]
     assert res["max_diff"] < 1e-5
     assert abs(res["lax_cond_l2_norm"] - 1.0) < 1e-3
     assert abs(res["lax_cond_linf_max"] - 1.0) < 1e-3
@@ -46,7 +48,7 @@ def test_04_vmap_goodbye_for_loops() -> None:
 
 
 def test_05_deterministic_prng_keys() -> None:
-    res = exp05.run_experiment(n_workers=1024, n_iters=50)
+    res = exp05.run_experiment(n_workers=1024, n_iters=50, repeats=1)
     assert res["reused_key_identical"] is True
     assert res["split_keys_distinct"] is True
     assert res["bitwise_order_invariant"] is True
