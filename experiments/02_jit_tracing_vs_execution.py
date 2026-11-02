@@ -126,9 +126,8 @@ def run_experiment(n_elements: int = 65536, n_iters: int = 150) -> dict[str, Any
     }
 
 
-def main() -> None:
-    show_ir = "--show-ir" in sys.argv[1:]
-    res = run_experiment()
+def print_report(res: dict[str, Any], show_ir: bool = False) -> None:
+    """Print the human-readable report for one run (also used by `verify_fundamentals.py --verbose`)."""
     print("=" * 72)
     print("Experiment 02: How @jax.jit Thinks (Tracing vs Cached Execution)")
     print("=" * 72)
@@ -160,6 +159,10 @@ def main() -> None:
         print(f"StableHLO (first 14 of {res['stablehlo_lines']} lines)")
         print("=" * 72)
         print("\n".join(res["stablehlo_text"].strip().splitlines()[:14]))
+
+
+def main() -> None:
+    print_report(run_experiment(), show_ir="--show-ir" in sys.argv[1:])
 
 
 if __name__ == "__main__":

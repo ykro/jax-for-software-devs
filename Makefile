@@ -2,9 +2,14 @@ PYTHON ?= $(shell if [ -x ../../.venv-shared/bin/python ]; then echo ../../.venv
 PYTEST ?= $(shell if [ -x ../../.venv-shared/bin/pytest ]; then echo ../../.venv-shared/bin/pytest; else command -v pytest; fi)
 RUFF ?= $(shell if [ -x ../../.venv-shared/bin/ruff ]; then echo ../../.venv-shared/bin/ruff; else command -v ruff; fi)
 
-.PHONY: all experiments verify test lint clean gcp-gpu gcp-tpu
+.PHONY: all report experiments verify test lint clean gcp-gpu gcp-tpu
 
 all: lint test verify
+
+# Same as `all`, but the judge also prints each experiment's report (and the Jaxpr/StableHLO)
+# from the same single run that writes benchmarks/latest_results.json
+report: lint test
+	$(PYTHON) verify_fundamentals.py --verbose --show-ir
 
 experiments:
 	$(PYTHON) experiments/01_numpy_to_jax_arrays.py

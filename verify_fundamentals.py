@@ -17,6 +17,7 @@ import json
 import os
 import platform
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -56,17 +57,31 @@ def _load_average() -> list[float]:
         return []
 
 
-def run_all_verifications() -> dict[str, Any]:
-    """Run all 5 experiments and enforce deterministic verification assertions."""
+def run_all_verifications(verbose: bool = False, show_ir: bool = False) -> dict[str, Any]:
+    """Run all 5 experiments and enforce deterministic verification assertions.
+
+    With `verbose`, print each experiment's own report as it finishes, so the per-experiment
+    numbers and the summary table come from the same single run.
+    """
     load_before = _load_average()
     r01 = exp01.run_benchmark()
+    if verbose:
+        exp01.print_report(r01)
     r02 = exp02.run_experiment()
+    if verbose:
+        exp02.print_report(r02, show_ir=show_ir)
     # Keep the JSON report compact: the IR dumps are printed by `02_*.py --show-ir`
     r02.pop("jaxpr_text", None)
     r02.pop("stablehlo_text", None)
     r03 = exp03.run_benchmark()
+    if verbose:
+        exp03.print_report(r03)
     r04 = exp04.run_benchmark()
+    if verbose:
+        exp04.print_report(r04)
     r05 = exp05.run_experiment()
+    if verbose:
+        exp05.print_report(r05)
 
     # Assertions for Experiment 01: NumPy to jax.numpy & Immutability
     assert r01["immutability_error_raised"] is True, "Exp01 must block in-place mutation"
@@ -141,7 +156,8 @@ def run_all_verifications() -> dict[str, Any]:
 
 
 def main() -> None:
-    summary = run_all_verifications()
+    args = sys.argv[1:]
+    summary = run_all_verifications(verbose="--verbose" in args, show_ir="--show-ir" in args)
     bench_dir = Path(__file__).resolve().parent / "benchmarks"
     bench_dir.mkdir(parents=True, exist_ok=True)
     out_json = bench_dir / "latest_results.json"

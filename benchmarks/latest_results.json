@@ -6,14 +6,14 @@
     "cpu_model": "Apple M1 Max",
     "cpu_count": 10,
     "load_average_before": [
-      7.58,
-      16.49,
-      17.27
+      15.52,
+      17.38,
+      12.22
     ],
     "load_average_after": [
-      7.45,
-      16.31,
-      17.2
+      14.76,
+      17.16,
+      12.2
     ],
     "timing": "median ms per call after one warmup call; varies run to run",
     "jax_version": "0.12.0.1",
@@ -31,14 +31,14 @@
       ],
       "immutability_error_raised": true,
       "original_unmodified": true,
-      "numpy_ms": 6.167,
-      "numpy_hoisted_ms": 1.4747,
-      "jax_eager_ms": 4.4308,
-      "jax_jit_ms": 0.3467,
-      "speedup_vs_numpy": 17.79,
-      "speedup_vs_eager": 12.78,
-      "speedup_vs_numpy_hoisted": 4.25,
-      "eager_vs_numpy": 1.39,
+      "numpy_ms": 7.6944,
+      "numpy_hoisted_ms": 1.873,
+      "jax_eager_ms": 4.3806,
+      "jax_jit_ms": 0.4941,
+      "speedup_vs_numpy": 15.57,
+      "speedup_vs_eager": 8.87,
+      "speedup_vs_numpy_hoisted": 3.79,
+      "eager_vs_numpy": 1.76,
       "max_diff_np_jit": 1.52587890625e-05,
       "max_diff_eager_jit": 1.52587890625e-05,
       "max_diff_hoisted_jit": 3.0517578125e-05
@@ -51,10 +51,10 @@
       "trace_count_after_new_shape": 2,
       "jaxpr_num_equations": 15,
       "stablehlo_lines": 61,
-      "first_call_compile_ms": 36.923,
-      "numpy_ms": 0.5132,
-      "cached_jit_ms": 0.102,
-      "speedup": 5.03,
+      "first_call_compile_ms": 43.657,
+      "numpy_ms": 0.6574,
+      "cached_jit_ms": 0.1197,
+      "speedup": 5.49,
       "max_diff": 2.384185791015625e-07,
       "lax_cond_l2_norm": 1.0,
       "lax_cond_linf_max": 1.0
@@ -70,22 +70,22 @@
       "loss_reduction_ratio": 376.48,
       "grad_max_diff_vs_finite_diff": 1.2359581887722015e-05,
       "finite_diff_jit_max_diff_vs_exact": 2.4160370230674744e-05,
-      "finite_diff_ms": 1.8369,
-      "finite_diff_jit_ms": 0.3449,
-      "jax_value_and_grad_ms": 0.0533,
-      "speedup": 34.48,
-      "speedup_vs_compiled_fd": 6.47
+      "finite_diff_ms": 2.1522,
+      "finite_diff_jit_ms": 0.3709,
+      "jax_value_and_grad_ms": 0.057,
+      "speedup": 37.77,
+      "speedup_vs_compiled_fd": 6.51
     },
     "04_vmap_goodbye_for_loops": {
       "experiment": "04_vmap_goodbye_for_loops",
       "backend": "cpu",
       "batch_size": 10000,
       "feature_dim": 16,
-      "for_loop_ms": 33.5893,
-      "numpy_vectorized_ms": 0.3204,
-      "vmap_jit_ms": 0.1571,
-      "speedup": 213.77,
-      "speedup_vs_numpy_vectorized": 2.04,
+      "for_loop_ms": 43.3333,
+      "numpy_vectorized_ms": 0.3967,
+      "vmap_jit_ms": 0.1681,
+      "speedup": 257.71,
+      "speedup_vs_numpy_vectorized": 2.36,
       "max_diff": 1.1920928955078125e-07,
       "max_diff_vectorized": 1.1920928955078125e-07
     },
@@ -98,11 +98,11 @@
       "bitwise_order_invariant": true,
       "max_diff_forward_reversed": 0.0,
       "max_diff_sequential_vmap": 1.1920928955078125e-07,
-      "sequential_loop_ms": 419.0313,
-      "compiled_loop_ms": 98.998,
-      "vmap_batched_ms": 8.9766,
-      "speedup": 46.68,
-      "speedup_vs_compiled_loop": 11.03
+      "sequential_loop_ms": 573.0041,
+      "compiled_loop_ms": 178.3925,
+      "vmap_batched_ms": 11.4403,
+      "speedup": 50.09,
+      "speedup_vs_compiled_loop": 15.59
     }
   },
   "all_verifications_passed": true

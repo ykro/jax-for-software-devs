@@ -4,8 +4,8 @@ Demonstrates:
 1. Automatic differentiation without Deep Learning: `jax.grad(f)` transforms a pure
    Python mathematical function into a new function that computes exact derivatives.
 2. Why `jax.value_and_grad` beats central finite differences `(f(x+eps)-f(x-eps))/(2*eps)`
-   in both precision and computational complexity (`O(1)` passes vs `O(2*D)` evaluations
-   for a `D`-dimensional parameter vector).
+   in both precision and cost: one forward plus one backward pass, against 2*D loss
+   evaluations for a `D`-dimensional parameter vector.
 3. Solving a 32-parameter thermal/sensor calibration problem in 20 optimization steps.
 
 Two speedups are reported. The headline one compares interpreted NumPy finite
@@ -190,8 +190,8 @@ def run_benchmark(
     }
 
 
-def main() -> None:
-    res = run_benchmark()
+def print_report(res: dict[str, Any]) -> None:
+    """Print the human-readable report for one run (also used by `verify_fundamentals.py --verbose`)."""
     print("=" * 72)
     print("Experiment 03: jax.grad as a Code Transformation (Sensor Calibration)")
     print("=" * 72)
@@ -202,10 +202,14 @@ def main() -> None:
     print("-" * 72)
     print(f"Central Finite Diff (64 evals)   : {res['finite_diff_ms']:.4f} ms")
     print(f"Compiled Finite Diff jit(vmap)   : {res['finite_diff_jit_ms']:.4f} ms")
-    print(f"JAX @jit(value_and_grad) (1 pass): {res['jax_value_and_grad_ms']:.4f} ms")
+    print(f"JAX @jit(value_and_grad)         : {res['jax_value_and_grad_ms']:.4f} ms (fwd + bwd)")
     print(f"Speedup vs Finite Differences    : {res['speedup']:.2f}x")
     print(f"Speedup vs Compiled Finite Diff  : {res['speedup_vs_compiled_fd']:.2f}x (autodiff alone)")
     print(f"Max |Finite Diff - Exact Grad|   : {res['grad_max_diff_vs_finite_diff']:.2e}")
+
+
+def main() -> None:
+    print_report(run_benchmark())
 
 
 if __name__ == "__main__":

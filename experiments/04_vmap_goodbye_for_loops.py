@@ -147,8 +147,8 @@ def run_benchmark(
     }
 
 
-def main() -> None:
-    res = run_benchmark()
+def print_report(res: dict[str, Any]) -> None:
+    """Print the human-readable report for one run (also used by `verify_fundamentals.py --verbose`)."""
     print("=" * 72)
     print("Experiment 04: Goodbye for-loops with jax.vmap (10,000 Records)")
     print("=" * 72)
@@ -161,6 +161,10 @@ def main() -> None:
     print(f"Speedup vs Python for-loop    : {res['speedup']:.2f}x")
     print(f"Speedup vs Vectorized NumPy   : {res['speedup_vs_numpy_vectorized']:.2f}x (fair baseline)")
     print(f"Max |for-loop - vmap|         : {res['max_diff']:.2e}")
+
+
+def main() -> None:
+    print_report(run_benchmark())
 
 
 if __name__ == "__main__":

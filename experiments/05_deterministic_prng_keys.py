@@ -127,8 +127,8 @@ def run_experiment(n_workers: int = 2048, n_iters: int = 100, repeats: int = 7) 
     }
 
 
-def main() -> None:
-    res = run_experiment()
+def print_report(res: dict[str, Any]) -> None:
+    """Print the human-readable report for one run (also used by `verify_fundamentals.py --verbose`)."""
     print("=" * 72)
     print("Experiment 05: Deterministic, Batchable PRNG Keys (Threefry)")
     print("=" * 72)
@@ -144,6 +144,10 @@ def main() -> None:
     print(f"Batched @jit(vmap) PRNG Time       : {res['vmap_batched_ms']:.4f} ms")
     print(f"Speedup (Batched vmap vs Loop)     : {res['speedup']:.2f}x")
     print(f"Speedup vs Loop over jit(single)   : {res['speedup_vs_compiled_loop']:.2f}x (fair baseline)")
+
+
+def main() -> None:
+    print_report(run_experiment())
 
 
 if __name__ == "__main__":

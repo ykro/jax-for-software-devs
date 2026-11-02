@@ -31,15 +31,15 @@ En lugar de programar derivadas manuales o `for-loops` para recorrer un `batch`,
 
 ## Resultados Reales de Verificación (`verify_fundamentals.py`)
 
-Corrida con Python `3.12.11`, JAX `0.12.0.1` y NumPy `2.5.4` en el CPU de una laptop (Apple M1 Max, 10 núcleos, sin GPU), con un load average de 7.6 al empezar y 7.5 al terminar. Las **verificaciones** son deterministas (paridad numérica, inmutabilidad, conteo de traces y determinismo del PRNG) y dan lo mismo en cada corrida. Los **tiempos** son la mediana por llamada después de una llamada de calentamiento y cambian de una corrida a otra; el juez solo exige mínimos holgados de speedup. Cada fila trae dos speedups, contra el código ingenuo y contra un baseline justo (ver [Cómo leer estas cifras](#cómo-leer-estas-cifras)).
+Corrida con Python `3.12.11`, JAX `0.12.0.1` y NumPy `2.5.4` en el CPU de una laptop (Apple M1 Max, 10 núcleos, sin GPU), con un load average de 15.5 al empezar y 14.8 al terminar (la laptop tenía otros procesos corriendo). Las **verificaciones** son deterministas (paridad numérica, inmutabilidad, conteo de traces y determinismo del PRNG) y dan lo mismo en cada corrida. Los **tiempos** son la mediana por llamada después de una llamada de calentamiento y cambian de una corrida a otra; el juez solo exige mínimos holgados de speedup. Cada fila trae dos speedups, contra el código ingenuo y contra un baseline justo (ver [Cómo leer estas cifras](#cómo-leer-estas-cifras)).
 
 | Experimento | Archivo | Baseline ingenuo | JAX + OpenXLA | Speedup | Contra el baseline justo |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **01. `jit` vs eager (simulación de portafolio)** | `experiments/01_numpy_to_jax_arrays.py` | `4.4308 ms` (JAX eager, también con `.at[].set()`) / `6.1670 ms` (NumPy) | `0.3467 ms` (`@jax.jit`) | **12.78x** vs eager / **17.79x** vs NumPy (`max_diff = 1.53e-05`) | **4.25x** vs NumPy con lo invariante fuera del loop (`1.4747 ms`) |
-| **02. `@jit` en caché vs NumPy** | `experiments/02_jit_tracing_vs_execution.py` | `0.5132 ms` (NumPy) | `0.1020 ms` (`@jit` en caché) | **5.03x** (`1 trace` para 3 llamadas con el mismo `shape`, `2` con un `shape` nuevo; Jaxpr de `15` ecuaciones de primer nivel, `61` líneas de StableHLO) | Igual (ya compara contra NumPy) |
-| **03. `value_and_grad` vs diferencias finitas** | `experiments/03_grad_as_code_transformation.py` | `1.8369 ms` (diferencias finitas en NumPy, 64 evaluaciones) | `0.0533 ms` (`jit(value_and_grad)`) | **34.48x** (`loss` baja **376.48x** en 20 steps) | **6.47x** vs diferencias finitas compiladas con `jit(vmap)` (`0.3449 ms`) |
-| **04. `vmap` vs for-loop (10,000 registros)** | `experiments/04_vmap_goodbye_for_loops.py` | `33.5893 ms` (`for-loop` de Python) | `0.1571 ms` (`jit(vmap)`) | **213.77x** (`max_diff = 1.19e-07`) | **2.04x** vs NumPy vectorizado a mano (`0.3204 ms`) |
-| **05. Keys Threefry en batch (`vmap`)** | `experiments/05_deterministic_prng_keys.py` | `419.0313 ms` (loop eager completo, 2048 workers) | `8.9766 ms` (`jit(vmap)` sobre 2048 keys) | **46.68x** (orden-invariante, `Δ = 0.0`) | **11.03x** vs loop sobre la función compilada de un worker (`98.9980 ms`) |
+| **01. `jit` vs eager (simulación de portafolio)** | `experiments/01_numpy_to_jax_arrays.py` | `4.3806 ms` (JAX eager, también con `.at[].set()`) / `7.6944 ms` (NumPy) | `0.4941 ms` (`@jax.jit`) | **8.87x** vs eager / **15.57x** vs NumPy (`max_diff = 1.53e-05`) | **3.79x** vs NumPy con lo invariante fuera del loop (`1.8730 ms`) |
+| **02. `@jit` en caché vs NumPy** | `experiments/02_jit_tracing_vs_execution.py` | `0.6574 ms` (NumPy) | `0.1197 ms` (`@jit` en caché) | **5.49x** (`1 trace` para 3 llamadas con el mismo `shape`, `2` con un `shape` nuevo; Jaxpr de `15` ecuaciones de primer nivel, `61` líneas de StableHLO) | Igual (ya compara contra NumPy) |
+| **03. `value_and_grad` vs diferencias finitas** | `experiments/03_grad_as_code_transformation.py` | `2.1522 ms` (diferencias finitas en NumPy, 64 evaluaciones) | `0.0570 ms` (`jit(value_and_grad)`) | **37.77x** (`loss` baja **376.48x** en 20 steps) | **6.51x** vs diferencias finitas compiladas con `jit(vmap)` (`0.3709 ms`) |
+| **04. `vmap` vs for-loop (10,000 registros)** | `experiments/04_vmap_goodbye_for_loops.py` | `43.3333 ms` (`for-loop` de Python) | `0.1681 ms` (`jit(vmap)`) | **257.71x** (`max_diff = 1.19e-07`) | **2.36x** vs NumPy vectorizado a mano (`0.3967 ms`) |
+| **05. Keys Threefry en batch (`vmap`)** | `experiments/05_deterministic_prng_keys.py` | `573.0041 ms` (loop eager completo, 2048 workers) | `11.4403 ms` (`jit(vmap)` sobre 2048 keys) | **50.09x** (orden-invariante, `Δ = 0.0`) | **15.59x** vs loop sobre la función compilada de un worker (`178.3925 ms`) |
 
 Salida íntegra de terminal generada por `verify_fundamentals.py` (la misma corrida que `benchmarks/latest_results.json`):
 
@@ -48,15 +48,15 @@ Salida íntegra de terminal generada por `verify_fundamentals.py` (la misma corr
 THE OUTSIDE JUDGE — JAX for Software Devs Verification Report
 ==============================================================================================================
 Runtime : Python 3.12.11 | JAX 0.12.0.1 | NumPy 2.5.4 | Backend: cpu
-CPU     : Apple M1 Max (10 cores) | 1-min load average 7.58 before, 7.45 after
+CPU     : Apple M1 Max (10 cores) | 1-min load average 15.52 before, 14.76 after
 --------------------------------------------------------------------------------------------------------------
 Experiment                         | Baseline      | JAX/OpenXLA | Speedup / Check | Fair baseline            
 --------------------------------------------------------------------------------------------------------------
-01. jit vs eager (portfolio sim)   | 4.4308 ms     | 0.3467 ms   | 12.78x (PASS)   | 4.25x vs hoisted NumPy   
-02. Cached @jit vs NumPy           | 0.5132 ms     | 0.102 ms    | 5.03x (1 trace) | same (already vs NumPy)  
-03. value_and_grad vs Finite Diff  | 1.8369 ms     | 0.0533 ms   | 34.48x (PASS)   | 6.47x vs jit finite diff 
-04. vmap vs for-loop (10k records) | 33.5893 ms    | 0.1571 ms   | 213.77x (PASS)  | 2.04x vs vectorized NumPy
-05. Batched Threefry keys (vmap)   | 419.0313 ms   | 8.9766 ms   | 46.68x (Δ=0.0)  | 11.03x vs loop over jit  
+01. jit vs eager (portfolio sim)   | 4.3806 ms     | 0.4941 ms   | 8.87x (PASS)    | 3.79x vs hoisted NumPy   
+02. Cached @jit vs NumPy           | 0.6574 ms     | 0.1197 ms   | 5.49x (1 trace) | same (already vs NumPy)  
+03. value_and_grad vs Finite Diff  | 2.1522 ms     | 0.057 ms    | 37.77x (PASS)   | 6.51x vs jit finite diff 
+04. vmap vs for-loop (10k records) | 43.3333 ms    | 0.1681 ms   | 257.71x (PASS)  | 2.36x vs vectorized NumPy
+05. Batched Threefry keys (vmap)   | 573.0041 ms   | 11.4403 ms  | 50.09x (Δ=0.0)  | 15.59x vs loop over jit  
 --------------------------------------------------------------------------------------------------------------
 Times are medians per call after a warmup and vary run to run (about ±15-20%).
 Saved JSON report to: benchmarks/latest_results.json
@@ -65,12 +65,12 @@ ALL DETERMINISTIC CHECKS PASSED.
 
 ### Cómo leer estas cifras
 
-- **Qué compara cada speedup.** La fila 01 compara `@jax.jit` contra JAX eager, y **los dos usan `.at[].set()`**, así que mide lo que aporta compilar. El speedup viene de que `jit` le entrega la función completa a XLA, que la fusiona en 3 kernels y calcula `tanh(shocks)` y `exp(...)` una sola vez en lugar de una vez por paso del loop. `.at[].set()` por sí solo no acelera, y JAX eager con el mismo `.at[].set()` apenas le gana 1.39x a NumPy en esta corrida. La 02 compara la llamada en caché contra NumPy. La 03 compara diferencias finitas en NumPy interpretado contra `value_and_grad` compilado, la 04 un `for-loop` de Python contra `jit(vmap)` y la 05 un loop eager que indexa `worker_keys[i]` en cada vuelta contra `jit(vmap)`.
+- **Qué compara cada speedup.** La fila 01 compara `@jax.jit` contra JAX eager, y **los dos usan `.at[].set()`**, así que mide lo que aporta compilar. El speedup viene de que `jit` le entrega la función completa a XLA, que la fusiona en 3 kernels y calcula `tanh(shocks)` y `exp(...)` una sola vez en lugar de una vez por paso del loop. `.at[].set()` por sí solo no acelera, y JAX eager con el mismo `.at[].set()` apenas le gana 1.76x a NumPy en esta corrida. La 02 compara la llamada en caché contra NumPy. La 03 compara diferencias finitas en NumPy interpretado contra `value_and_grad` compilado, la 04 un `for-loop` de Python contra `jit(vmap)` y la 05 un loop eager que indexa `worker_keys[i]` en cada vuelta contra `jit(vmap)`.
 - **Baselines justos.** Contra la mejor versión razonable sin la transformación, las ventajas son mucho menores y más útiles para decidir: unas **4.8x** de `jit` frente a NumPy con lo invariante fuera del loop, unas **5.8x** de autodiff frente a diferencias finitas también compiladas (con 32 parámetros; la ventaja crece con el número de parámetros), unas **2.2x** de `vmap` frente a NumPy vectorizado a mano (lo valioso es llegar ahí sin reescribir la función de un registro) y unas **12x** frente a un loop sobre la versión compilada de un worker. Son medianas de una corrida aparte con los scripts de sonda (con `nice` y un load average de 6 a 10 en los 10 núcleos), que coinciden con la columna «Contra el baseline justo» dentro del margen de variación.
-- **Mediana por llamada después del warmup.** La primera llamada a una función con `@jax.jit` incluye tracing y compilación (unos 37 ms en el experimento 02) y no entra en las medianas.
+- **Mediana por llamada después del warmup.** La primera llamada a una función con `@jax.jit` incluye tracing y compilación (unos 44 ms en el experimento 02) y no entra en las medianas.
 - **CPU de una laptop.** Todo corre en CPU (Apple M1 Max, 10 núcleos), sin GPU ni TPU. Con estos tamaños, la diferencia entre XLA multihilo y NumPy de un hilo no explica los speedups (desactivar los hilos de XLA no cambia los tiempos de forma apreciable). `vmap` vectoriza en un solo batch compilado; no reparte trabajo entre núcleos por sí mismo.
 - **Variación entre corridas.** En la misma máquina, los speedups cambian ±15–20 % de una corrida a otra (por ejemplo, la fila 01 contra NumPy ha dado entre 15x y 22x). Los dos decimales que imprime el juez no implican esa precisión.
-- **Videos.** La tabla del juez que aparece en el [video de práctica](https://youtu.be/p1dv3q2INGQ) (13.78x / 5.16x / 32.39x / 207.02x / 47.52x) es una corrida anterior de este mismo código, antes de agregar los baselines justos. El [video de teoría](https://youtu.be/kIRbH33BGBo) usa cifras de una versión anterior que medía la media en lugar de la mediana y extrapolaba el loop del experimento 05.
+- **Videos.** La tabla del juez que aparece en el [video de práctica](https://youtu.be/p1dv3q2INGQ) (13.78x / 5.16x / 32.39x / 207.02x / 47.52x) es una corrida anterior de este mismo código, antes de agregar los baselines justos. La segunda versión del video de práctica muestra exactamente la corrida de esta tabla (`make report`). El [video de teoría](https://youtu.be/kIRbH33BGBo) usa cifras de una versión anterior que medía la media en lugar de la mediana y extrapolaba el loop del experimento 05.
 
 ---
 
@@ -145,6 +145,10 @@ python verify_fundamentals.py
 
 # Ejecutar ruff, pytest (5 tests) y verify_fundamentals.py en un solo comando
 make all
+
+# Lo mismo, pero el juez imprime además el reporte de cada experimento (y el Jaxpr y el StableHLO)
+# de la misma corrida que escribe benchmarks/latest_results.json
+make report
 ```
 
 ### 4. Ejecución on-demand con auto-teardown en Google Cloud (Cloud TPU v5e o NVIDIA L4 GPU)

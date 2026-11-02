@@ -2,15 +2,15 @@
 THE OUTSIDE JUDGE — JAX for Software Devs Verification Report
 ==============================================================================================================
 Runtime : Python 3.12.11 | JAX 0.12.0.1 | NumPy 2.5.4 | Backend: cpu
-CPU     : Apple M1 Max (10 cores) | 1-min load average 7.58 before, 7.45 after
+CPU     : Apple M1 Max (10 cores) | 1-min load average 15.52 before, 14.76 after
 --------------------------------------------------------------------------------------------------------------
 Experiment                         | Baseline      | JAX/OpenXLA | Speedup / Check | Fair baseline            
 --------------------------------------------------------------------------------------------------------------
-01. jit vs eager (portfolio sim)   | 4.4308 ms     | 0.3467 ms   | 12.78x (PASS)   | 4.25x vs hoisted NumPy   
-02. Cached @jit vs NumPy           | 0.5132 ms     | 0.102 ms    | 5.03x (1 trace) | same (already vs NumPy)  
-03. value_and_grad vs Finite Diff  | 1.8369 ms     | 0.0533 ms   | 34.48x (PASS)   | 6.47x vs jit finite diff 
-04. vmap vs for-loop (10k records) | 33.5893 ms    | 0.1571 ms   | 213.77x (PASS)  | 2.04x vs vectorized NumPy
-05. Batched Threefry keys (vmap)   | 419.0313 ms   | 8.9766 ms   | 46.68x (Δ=0.0)  | 11.03x vs loop over jit  
+01. jit vs eager (portfolio sim)   | 4.3806 ms     | 0.4941 ms   | 8.87x (PASS)    | 3.79x vs hoisted NumPy   
+02. Cached @jit vs NumPy           | 0.6574 ms     | 0.1197 ms   | 5.49x (1 trace) | same (already vs NumPy)  
+03. value_and_grad vs Finite Diff  | 2.1522 ms     | 0.057 ms    | 37.77x (PASS)   | 6.51x vs jit finite diff 
+04. vmap vs for-loop (10k records) | 43.3333 ms    | 0.1681 ms   | 257.71x (PASS)  | 2.36x vs vectorized NumPy
+05. Batched Threefry keys (vmap)   | 573.0041 ms   | 11.4403 ms  | 50.09x (Δ=0.0)  | 15.59x vs loop over jit  
 --------------------------------------------------------------------------------------------------------------
 Times are medians per call after a warmup and vary run to run (about ±15-20%).
 Saved JSON report to: benchmarks/latest_results.json

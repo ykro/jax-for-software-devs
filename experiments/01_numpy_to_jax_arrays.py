@@ -164,8 +164,8 @@ def run_benchmark(
     }
 
 
-def main() -> None:
-    res = run_benchmark()
+def print_report(res: dict[str, Any]) -> None:
+    """Print the human-readable report for one run (also used by `verify_fundamentals.py --verbose`)."""
     print("=" * 72)
     print("Experiment 01: NumPy to jax.numpy & Functional Immutability")
     print("=" * 72)
@@ -183,6 +183,10 @@ def main() -> None:
     print(f"Speedup vs Hoisted NumPy   : {res['speedup_vs_numpy_hoisted']:.2f}x (fair baseline)")
     print(f"Eager .at[].set() vs NumPy : {res['eager_vs_numpy']:.2f}x (no jit, no fusion)")
     print(f"Max |NumPy - JAX @jit|     : {res['max_diff_np_jit']:.2e}")
+
+
+def main() -> None:
+    print_report(run_benchmark())
 
 
 if __name__ == "__main__":
