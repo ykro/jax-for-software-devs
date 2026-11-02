@@ -139,7 +139,7 @@ def main() -> None:
         "(Python body ran once)"
     )
     print(f"Traces After New Shape           : {res['trace_count_after_new_shape']}")
-    print(f"Jaxpr Primitive Equations        : {res['jaxpr_num_equations']} ops")
+    print(f"Jaxpr Top-Level Equations        : {res['jaxpr_num_equations']} eqns")
     print(f"Lowered StableHLO Lines          : {res['stablehlo_lines']} lines")
     print(
         f"lax.cond Branches (L2 / L-inf)   : "
@@ -153,7 +153,7 @@ def main() -> None:
     print(f"Max |NumPy - JAX @jit|           : {res['max_diff']:.2e}")
     if show_ir:
         print("=" * 72)
-        print(f"Jaxpr ({res['jaxpr_num_equations']} equations)")
+        print(f"Jaxpr ({res['jaxpr_num_equations']} top-level equations)")
         print("=" * 72)
         print(res["jaxpr_text"])
         print("=" * 72)

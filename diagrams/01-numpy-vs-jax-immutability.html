@@ -34,12 +34,12 @@
 <body>
   <main class="frame">
     <p class="eyebrow">Architecture delta · JAX &amp; OpenXLA Field Guide</p>
-    <h1>NumPy in-place RAM mutation vs JAX pure .at[].set() in PJRT buffers</h1>
+    <h1>NumPy in-place mutation vs JAX pure .at[].set(), purity enables fusion and jit delivers the speedup</h1>
 
     <div class="diagram-container" role="region" aria-label="Before, changes, and after architecture comparison; scroll horizontally on narrow screens" tabindex="0">
       <svg viewBox="0 0 1200 660" xmlns="http://www.w3.org/2000/svg" data-diagram="architecture-delta" role="img" aria-labelledby="numpy-vs-jax-title numpy-vs-jax-desc">
         <title id="numpy-vs-jax-title">NumPy in-place mutation vs JAX pure .at[].set() transformation</title>
-        <desc id="numpy-vs-jax-desc">Architecture delta comparing NumPy in-place array mutation with shared-buffer aliasing on CPU RAM against JAX immutable functional updates via .at[].set() lowered into fused PJRT buffers by OpenXLA.</desc>
+        <desc id="numpy-vs-jax-desc">Architecture delta comparing NumPy in-place array mutation with shared-buffer aliasing on CPU RAM against JAX immutable functional updates via .at[].set(). The speedup comes from jit: XLA fuses the function into 3 kernels and computes tanh and exp once; .at[].set() alone, in eager mode, is only slightly faster than NumPy.</desc>
         <defs>
           <marker id="numpy-vs-jax-arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 8 3, 0 6" fill="#3B5B8C"/></marker>
         </defs>
@@ -49,7 +49,7 @@
         <text x="424" y="28" fill="#0F2547" font-size="14" font-family="'Geist', sans-serif" font-weight="600">Changes Ledger</text>
         <text x="424" y="50" fill="#3B5B8C" font-size="10" font-family="'Geist', sans-serif">Functional immutability for XLA compiler safety</text>
         <text x="840" y="28" fill="#0F2547" font-size="14" font-family="'Geist', sans-serif" font-weight="600">After · JAX Pure .at[].set()</text>
-        <text x="840" y="50" fill="#3B5B8C" font-size="10" font-family="'Geist', sans-serif">Immutable semantics + XLA buffer donation</text>
+        <text x="840" y="50" fill="#3B5B8C" font-size="10" font-family="'Geist', sans-serif">Immutable semantics; jit does the fusing</text>
         <path d="M 392 8 V 568 M 808 8 V 568" stroke="rgba(15,37,71,0.14)" stroke-width="1"/>
 
         <g data-snapshot="before" transform="translate(24 88)" data-grid="336 480 4">
@@ -119,7 +119,7 @@
         <path d="M 456 262 H 776" stroke="rgba(15,37,71,0.14)" stroke-width="0.8"/>
 
         <text x="424" y="286" fill="#3B5B8C" font-size="9" font-family="'Geist Mono', monospace">04</text>
-        <text x="456" y="284" data-change="CHANGED" data-target="buffer" fill="#3B5B8C" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">CHANGED · buffer<tspan x="456" y="306" fill="#0F2547" font-size="11.5" font-family="'Geist', sans-serif" letter-spacing="0">Host RAM → fused PJRT accelerator buffer</tspan></text>
+        <text x="456" y="284" data-change="CHANGED" data-target="buffer" fill="#3B5B8C" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">CHANGED · buffer<tspan x="456" y="306" fill="#0F2547" font-size="11.5" font-family="'Geist', sans-serif" letter-spacing="0">Under jit: 3 fused kernels, tanh/exp once</tspan></text>
         <path d="M 456 322 H 776" stroke="rgba(15,37,71,0.14)" stroke-width="0.8"/>
 
         <text x="424" y="346" fill="#3B5B8C" font-size="9" font-family="'Geist Mono', monospace">05</text>
@@ -131,10 +131,13 @@
         <path d="M 456 442 H 776" stroke="rgba(15,37,71,0.14)" stroke-width="0.8"/>
 
         <text x="424" y="466" fill="#3B5B8C" font-size="9" font-family="'Geist Mono', monospace">07</text>
-        <text x="456" y="464" data-change="ADDED" data-target="r4" fill="#3B5B8C" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">ADDED · r4<tspan x="456" y="486" fill="#0F2547" font-size="11.5" font-family="'Geist', sans-serif" letter-spacing="0">Emit fused PJRT buffer (input preserved)</tspan></text>
+        <text x="456" y="464" data-change="ADDED" data-target="r4" fill="#3B5B8C" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">ADDED · r4<tspan x="456" y="486" fill="#0F2547" font-size="11.5" font-family="'Geist', sans-serif" letter-spacing="0">Emit new output buffer (input preserved)</tspan></text>
 
-        <text x="424" y="536" fill="#3B5B8C" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">PRESERVED</text>
-        <text x="424" y="554" fill="#3B5B8C" font-size="11" font-family="'Geist', sans-serif">Python function · Portfolio returns · r1 · r5</text>
+        <text x="424" y="512" fill="#9A6F0B" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">WHERE THE SPEEDUP COMES FROM</text>
+        <text x="424" y="530" fill="#0F2547" font-size="11" font-family="'Geist', sans-serif">jit vs eager, both with .at[].set(): 12.8x · vs NumPy: 17.8x</text>
+        <text x="424" y="546" fill="#3B5B8C" font-size="11" font-family="'Geist', sans-serif">.at[].set() alone (eager) vs NumPy: 1.4x · jit vs hoisted NumPy: 4.2x</text>
+        <text x="424" y="566" fill="#3B5B8C" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">PRESERVED</text>
+        <text x="424" y="582" fill="#3B5B8C" font-size="11" font-family="'Geist', sans-serif">Python function · Portfolio returns · r1 · r5</text>
 
         <g data-snapshot="after" transform="translate(840 88)" data-grid="336 480 4">
           <path data-kind="relationship" data-object-id="r1" data-status="unchanged" data-signature="array:in" data-from="caller" data-to="op" d="M 168 64 V 96" fill="none" stroke="#3B5B8C" stroke-width="1.2" marker-end="url(#numpy-vs-jax-arrow)"/>
@@ -171,7 +174,7 @@
             <rect x="88" y="196" width="160" height="56" rx="4" fill="none" stroke="#C59216" stroke-width="0.8"/>
             <text x="96" y="208" fill="#9A6F0B" font-size="7.5" font-family="'Geist Mono', monospace">+ scatter · ADDED</text>
             <text x="96" y="228" fill="#0F2547" font-size="12" font-family="'Geist', sans-serif" font-weight="600">XLA Pure Scatter</text>
-            <text x="96" y="244" fill="#9A6F0B" font-size="9" font-family="'Geist Mono', monospace">zero aliasing · fused</text>
+            <text x="96" y="244" fill="#9A6F0B" font-size="9" font-family="'Geist Mono', monospace">zero aliasing · pure</text>
           </g>
 
           <g data-kind="component" data-object-id="buffer" data-status="changed" data-signature="mem:pjrt-buffer">
@@ -179,7 +182,7 @@
             <path d="M 85 316 V 356" fill="none" stroke="#3B5B8C" stroke-width="3"/>
             <text x="96" y="320" fill="#3B5B8C" font-size="7.5" font-family="'Geist Mono', monospace">~ buffer · CHANGED</text>
             <text x="96" y="340" fill="#0F2547" font-size="12" font-family="'Geist', sans-serif" font-weight="600">Memory Buffer</text>
-            <text x="96" y="356" fill="#3B5B8C" font-size="9" font-family="'Geist Mono', monospace">PJRT buffer · 19x</text>
+            <text x="96" y="356" fill="#3B5B8C" font-size="9" font-family="'Geist Mono', monospace">jit · 3 fused kernels</text>
           </g>
 
           <g data-kind="component" data-object-id="result" data-status="unchanged" data-signature="array:return:v1">

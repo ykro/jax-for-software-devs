@@ -8,6 +8,14 @@ Demonstrates:
    in-place inside compiled `@jax.jit` kernels when safe).
 4. A vectorized Monte Carlo Black-Scholes / portfolio simulation comparing
    NumPy vs JAX Eager vs `@jax.jit` compiled execution.
+
+Where the speedup comes from: `.at[].set()` by itself does not make code faster
+(JAX eager with the same `.at[].set()` is only slightly faster than NumPy). The gain
+comes from `@jax.jit` handing the whole function to XLA, which fuses it into a few
+kernels and computes `tanh(shocks)` and `exp(...)` once instead of once per loop step
+(common-subexpression elimination). To show how much is left once that redundant work
+is removed by hand, the script also times a NumPy version with the loop-invariant
+expressions hoisted out of the loop (`numpy_hoisted_portfolio_simulation`).
 """
 
 from __future__ import annotations
@@ -35,6 +43,22 @@ def numpy_portfolio_simulation(
         drifted = h * (1.0 + 0.015 * np.tanh(shocks))
         volatility_drag = 0.5 * (shocks**2) * 0.02
         h = drifted * np.exp(-volatility_drag) + 0.05 * weights
+    return np.sum(h * weights, axis=-1)
+
+
+def numpy_hoisted_portfolio_simulation(
+    prices: np.ndarray,
+    weights: np.ndarray,
+    shocks: np.ndarray,
+) -> np.ndarray:
+    """Fairer NumPy baseline: same math with the loop-invariant work hoisted out of the loop."""
+    h = prices.copy()
+    h[:, 0] = np.clip(h[:, 0], 80.0, 120.0)
+    growth = (1.0 + 0.015 * np.tanh(shocks)) * np.exp(-(0.5 * (shocks**2) * 0.02))
+    offset = 0.05 * weights
+    for _ in range(6):
+        h *= growth
+        h += offset
     return np.sum(h * weights, axis=-1)
 
 
@@ -95,16 +119,19 @@ def run_benchmark(
 
     # Warmup
     out_np = numpy_portfolio_simulation(prices_np, weights_np, shocks_np)
+    out_hoisted = numpy_hoisted_portfolio_simulation(prices_np, weights_np, shocks_np)
     out_eager = jax_portfolio_simulation(prices_jax, weights_jax, shocks_jax).block_until_ready()
     out_jit = jax_jit_portfolio_simulation(prices_jax, weights_jax, shocks_jax).block_until_ready()
 
     max_diff_np_jit = float(np.max(np.abs(out_np - np.asarray(out_jit))))
     max_diff_eager_jit = float(jnp.max(jnp.abs(out_eager - out_jit)))
+    max_diff_hoisted_jit = float(np.max(np.abs(out_hoisted - np.asarray(out_jit))))
 
     # Median per-call time of each implementation
     numpy_args = (prices_np, weights_np, shocks_np)
     jax_args = (prices_jax, weights_jax, shocks_jax)
     numpy_ms = _median_ms(lambda: numpy_portfolio_simulation(*numpy_args), n_iters)
+    numpy_hoisted_ms = _median_ms(lambda: numpy_hoisted_portfolio_simulation(*numpy_args), n_iters)
     jax_eager_ms = _median_ms(
         lambda: jax_portfolio_simulation(*jax_args).block_until_ready(), n_iters
     )
@@ -114,6 +141,8 @@ def run_benchmark(
 
     speedup_vs_numpy = numpy_ms / jax_jit_ms
     speedup_vs_eager = jax_eager_ms / jax_jit_ms
+    speedup_vs_numpy_hoisted = numpy_hoisted_ms / jax_jit_ms
+    eager_vs_numpy = numpy_ms / jax_eager_ms
 
     return {
         "experiment": "01_numpy_to_jax_arrays",
@@ -122,12 +151,16 @@ def run_benchmark(
         "immutability_error_raised": immutability_error_raised,
         "original_unmodified": original_unmodified,
         "numpy_ms": round(numpy_ms, 4),
+        "numpy_hoisted_ms": round(numpy_hoisted_ms, 4),
         "jax_eager_ms": round(jax_eager_ms, 4),
         "jax_jit_ms": round(jax_jit_ms, 4),
         "speedup_vs_numpy": round(speedup_vs_numpy, 2),
         "speedup_vs_eager": round(speedup_vs_eager, 2),
+        "speedup_vs_numpy_hoisted": round(speedup_vs_numpy_hoisted, 2),
+        "eager_vs_numpy": round(eager_vs_numpy, 2),
         "max_diff_np_jit": max_diff_np_jit,
         "max_diff_eager_jit": max_diff_eager_jit,
+        "max_diff_hoisted_jit": max_diff_hoisted_jit,
     }
 
 
@@ -142,10 +175,13 @@ def main() -> None:
     print(f".at[].set() Pure Semantics : {res['original_unmodified']} (input buffer untouched)")
     print("-" * 72)
     print(f"NumPy Median Time          : {res['numpy_ms']:.4f} ms")
+    print(f"NumPy Hoisted Median Time  : {res['numpy_hoisted_ms']:.4f} ms (invariants out of loop)")
     print(f"JAX Eager Median Time      : {res['jax_eager_ms']:.4f} ms")
     print(f"JAX @jit Fused Median Time : {res['jax_jit_ms']:.4f} ms")
     print(f"Speedup vs NumPy           : {res['speedup_vs_numpy']:.2f}x")
-    print(f"Speedup vs JAX Eager       : {res['speedup_vs_eager']:.2f}x")
+    print(f"Speedup vs JAX Eager       : {res['speedup_vs_eager']:.2f}x (both use .at[].set())")
+    print(f"Speedup vs Hoisted NumPy   : {res['speedup_vs_numpy_hoisted']:.2f}x (fair baseline)")
+    print(f"Eager .at[].set() vs NumPy : {res['eager_vs_numpy']:.2f}x (no jit, no fusion)")
     print(f"Max |NumPy - JAX @jit|     : {res['max_diff_np_jit']:.2e}")
 
 

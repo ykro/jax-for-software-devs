@@ -17,6 +17,8 @@ def test_01_numpy_to_jax_arrays() -> None:
     assert res["original_unmodified"] is True
     assert res["max_diff_np_jit"] < 1e-4
     assert res["max_diff_eager_jit"] < 1e-4
+    assert res["max_diff_hoisted_jit"] < 1e-4
+    assert res["numpy_hoisted_ms"] > 0.0
     assert res["speedup_vs_eager"] >= 2.0
 
 
@@ -36,6 +38,8 @@ def test_02_jit_tracing_vs_execution() -> None:
 def test_03_grad_as_code_transformation() -> None:
     res = exp03.run_benchmark(n_samples=1024, n_params=32, n_steps=20, n_iters=40)
     assert res["grad_max_diff_vs_finite_diff"] < 1e-4
+    assert res["finite_diff_jit_max_diff_vs_exact"] < 1e-4
+    assert res["finite_diff_jit_ms"] > 0.0
     assert res["final_loss"] < res["initial_loss"]
     assert res["loss_reduction_ratio"] >= 5.0
     assert res["speedup"] >= 5.0
@@ -44,6 +48,7 @@ def test_03_grad_as_code_transformation() -> None:
 def test_04_vmap_goodbye_for_loops() -> None:
     res = exp04.run_benchmark(batch_size=5000, feature_dim=16, n_iters_vmap=50, n_iters_loop=3)
     assert res["max_diff"] < 1e-5
+    assert res["max_diff_vectorized"] < 1e-5
     assert res["speedup"] >= 20.0
 
 
@@ -53,4 +58,5 @@ def test_05_deterministic_prng_keys() -> None:
     assert res["split_keys_distinct"] is True
     assert res["bitwise_order_invariant"] is True
     assert res["max_diff_sequential_vmap"] < 1e-6
+    assert res["compiled_loop_ms"] > 0.0
     assert res["speedup"] >= 10.0

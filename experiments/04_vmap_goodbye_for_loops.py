@@ -3,9 +3,12 @@
 Demonstrates:
 1. Writing clean, maintainable domain logic for a SINGLE 1D record (`score_single_transaction`)
    without manual batch dimensions or broadcasting gymnastics.
-2. Transforming that single-record function into a parallel batch processor over 10,000
+2. Transforming that single-record function into a compiled batch processor over 10,000
    records with `jax.jit(jax.vmap(score_single_transaction, in_axes=(0, None, None)))`.
-3. Measuring the speedup of compiled `vmap` vs a Python `for-loop`.
+3. Measuring the speedup of compiled `vmap` vs a Python `for-loop`, and vs the same logic
+   vectorized by hand in NumPy (the fair baseline: most of the for-loop cost is interpreter
+   overhead on 16-float vectors, and the value of `vmap` is reaching hand-vectorized speed
+   without rewriting the single-record function).
 """
 
 from __future__ import annotations
@@ -72,11 +75,27 @@ def python_for_loop_scoring(
     return scores
 
 
+def numpy_vectorized_scoring(
+    batch_tx: np.ndarray,
+    ref_profile: np.ndarray,
+    risk_mat: np.ndarray,
+) -> np.ndarray:
+    """Fairer baseline: the same scoring rewritten by hand for the whole batch in NumPy."""
+    deviation = batch_tx - ref_profile
+    projected = deviation @ risk_mat.T
+    maha = np.sqrt(np.einsum("ij,ij->i", projected, projected) + 1e-6)
+    cos = (batch_tx @ ref_profile) / (
+        np.linalg.norm(batch_tx, axis=1) * np.linalg.norm(ref_profile) + 1e-6
+    )
+    raw = 0.65 * maha - 1.25 * cos
+    return 1.0 / (1.0 + np.exp(-raw))
+
+
 def run_benchmark(
     batch_size: int = 10000,
     feature_dim: int = 16,
     n_iters_vmap: int = 100,
-    n_iters_loop: int = 5,
+    n_iters_loop: int = 15,
 ) -> dict[str, Any]:
     """Benchmark Python for-loop vs compiled `jax.vmap` over 10,000 records."""
     rng = np.random.default_rng(2026)
@@ -95,10 +114,15 @@ def run_benchmark(
     scores_vmap = batch_score_transactions(batch_tx_jax, ref_jax, risk_mat_jax).block_until_ready()
 
     max_diff = float(np.max(np.abs(scores_loop - np.asarray(scores_vmap))))
+    scores_vec = numpy_vectorized_scoring(batch_tx_np, ref_np, risk_mat_np)
+    max_diff_vectorized = float(np.max(np.abs(scores_vec - np.asarray(scores_vmap))))
 
     # Median per-call time: Python for-loop vs compiled jax.vmap
     for_loop_ms = _median_ms(
         lambda: python_for_loop_scoring(batch_tx_np, ref_np, risk_mat_np), n_iters_loop
+    )
+    numpy_vectorized_ms = _median_ms(
+        lambda: numpy_vectorized_scoring(batch_tx_np, ref_np, risk_mat_np), n_iters_vmap
     )
     vmap_ms = _median_ms(
         lambda: batch_score_transactions(batch_tx_jax, ref_jax, risk_mat_jax).block_until_ready(),
@@ -106,6 +130,7 @@ def run_benchmark(
     )
 
     speedup = for_loop_ms / vmap_ms
+    speedup_vs_numpy_vectorized = numpy_vectorized_ms / vmap_ms
 
     return {
         "experiment": "04_vmap_goodbye_for_loops",
@@ -113,9 +138,12 @@ def run_benchmark(
         "batch_size": batch_size,
         "feature_dim": feature_dim,
         "for_loop_ms": round(for_loop_ms, 4),
+        "numpy_vectorized_ms": round(numpy_vectorized_ms, 4),
         "vmap_jit_ms": round(vmap_ms, 4),
         "speedup": round(speedup, 2),
+        "speedup_vs_numpy_vectorized": round(speedup_vs_numpy_vectorized, 2),
         "max_diff": max_diff,
+        "max_diff_vectorized": max_diff_vectorized,
     }
 
 
@@ -128,8 +156,10 @@ def main() -> None:
     print(f"Batch Size & Feature Dim      : ({res['batch_size']}, {res['feature_dim']}) float32")
     print("-" * 72)
     print(f"Python for-loop Median Time   : {res['for_loop_ms']:.4f} ms")
+    print(f"NumPy Hand-Vectorized Median  : {res['numpy_vectorized_ms']:.4f} ms")
     print(f"JAX @jit(vmap(f)) Median Time : {res['vmap_jit_ms']:.4f} ms")
     print(f"Speedup vs Python for-loop    : {res['speedup']:.2f}x")
+    print(f"Speedup vs Vectorized NumPy   : {res['speedup_vs_numpy_vectorized']:.2f}x (fair baseline)")
     print(f"Max |for-loop - vmap|         : {res['max_diff']:.2e}")
 
 

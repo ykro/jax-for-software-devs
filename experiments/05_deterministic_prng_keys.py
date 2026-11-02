@@ -1,4 +1,4 @@
-"""Experiment 05: Deterministic & Parallelizable PRNG Keys (jax.random.key & split).
+"""Experiment 05: Deterministic, Batchable PRNG Keys (jax.random.key & split).
 
 Demonstrates:
 1. Why stateful/sequential random generators depend on execution order and break
@@ -7,8 +7,14 @@ Demonstrates:
    turns random state into an explicit value:
    - Reusing the same key without splitting is a deterministic antipattern
      (produces identical random draws).
-   - Splitting keys (`jax.random.split(master_key, N)`) guarantees bitwise-identical
-     results across sequential loops, reversed execution order, and parallel `vmap`.
+   - Splitting keys (`jax.random.split(master_key, N)`) gives every worker its own
+     stream, so the random bits do not depend on execution order. The script checks
+     forward vs reversed order (bitwise identical) and loop vs batched `vmap` (equal up
+     to float32 rounding between eager and compiled code).
+3. Timing: `vmap` vectorizes the 2048 workers into one compiled batch (it does not spread
+   work across cores by itself). Two baselines are reported: the naive one (an eager loop
+   that indexes `worker_keys[i]` on every step) and a fairer one (a loop over the compiled
+   single-worker function with the keys already split into a list).
 """
 
 from __future__ import annotations
@@ -30,11 +36,12 @@ def simulate_worker_rollout(worker_key: jax.Array) -> jax.Array:
     return jnp.mean(jnp.tanh(service_curve / 128.0))
 
 
-parallel_worker_rollouts = jax.jit(jax.vmap(simulate_worker_rollout))
+batched_worker_rollouts = jax.jit(jax.vmap(simulate_worker_rollout))
+single_worker_rollout_jit = jax.jit(simulate_worker_rollout)
 
 
-def run_experiment(n_workers: int = 2048, n_iters: int = 100, repeats: int = 3) -> dict[str, Any]:
-    """Verify PRNG key splitting semantics, order invariance, and parallel vmap speedup."""
+def run_experiment(n_workers: int = 2048, n_iters: int = 100, repeats: int = 7) -> dict[str, Any]:
+    """Verify PRNG key splitting semantics, order invariance, and batched vmap speedup."""
     master_key = jax.random.key(42)
 
     # 1. Antipattern demonstration: reusing the exact same key without split()
@@ -58,15 +65,15 @@ def run_experiment(n_workers: int = 2048, n_iters: int = 100, repeats: int = 3) 
     seq_reversed_list = [simulate_worker_rollout(sub_keys[i]) for i in range(subset - 1, -1, -1)]
     seq_reversed = jnp.stack(list(reversed(seq_reversed_list)))
 
-    # Parallel execution via @jax.jit(jax.vmap)
-    vmap_all = parallel_worker_rollouts(worker_keys).block_until_ready()
+    # Batched execution via @jax.jit(jax.vmap)
+    vmap_all = batched_worker_rollouts(worker_keys).block_until_ready()
     vmap_subset = vmap_all[:subset]
 
     max_diff_forward_reversed = float(jnp.max(jnp.abs(seq_forward - seq_reversed)))
     max_diff_sequential_vmap = float(jnp.max(jnp.abs(seq_forward - vmap_subset)))
     bitwise_order_invariant = bool(max_diff_forward_reversed == 0.0)
 
-    # 3. Benchmark the full sequential Python loop over N workers vs parallel vmap over N keys
+    # 3. Benchmark the full sequential Python loop over N workers vs batched vmap over N keys
     def sequential_loop() -> None:
         for i in range(n_workers):
             simulate_worker_rollout(worker_keys[i]).block_until_ready()
@@ -78,14 +85,30 @@ def run_experiment(n_workers: int = 2048, n_iters: int = 100, repeats: int = 3) 
         loop_times.append((time.perf_counter() - t0) * 1000.0)
     sequential_loop_ms = statistics.median(loop_times)
 
+    # Fairer baseline: loop over the compiled single-worker function, keys pre-split
+    key_list = list(worker_keys)
+    single_worker_rollout_jit(key_list[0]).block_until_ready()  # warmup (compile)
+
+    def compiled_loop() -> None:
+        for key in key_list:
+            single_worker_rollout_jit(key).block_until_ready()
+
+    compiled_times = []
+    for _ in range(repeats):
+        t0 = time.perf_counter()
+        compiled_loop()
+        compiled_times.append((time.perf_counter() - t0) * 1000.0)
+    compiled_loop_ms = statistics.median(compiled_times)
+
     vmap_times = []
     for _ in range(n_iters):
         t0 = time.perf_counter()
-        parallel_worker_rollouts(worker_keys).block_until_ready()
+        batched_worker_rollouts(worker_keys).block_until_ready()
         vmap_times.append((time.perf_counter() - t0) * 1000.0)
-    vmap_parallel_ms = statistics.median(vmap_times)
+    vmap_batched_ms = statistics.median(vmap_times)
 
-    speedup = sequential_loop_ms / vmap_parallel_ms
+    speedup = sequential_loop_ms / vmap_batched_ms
+    speedup_vs_compiled_loop = compiled_loop_ms / vmap_batched_ms
 
     return {
         "experiment": "05_deterministic_prng_keys",
@@ -97,26 +120,30 @@ def run_experiment(n_workers: int = 2048, n_iters: int = 100, repeats: int = 3) 
         "max_diff_forward_reversed": max_diff_forward_reversed,
         "max_diff_sequential_vmap": max_diff_sequential_vmap,
         "sequential_loop_ms": round(sequential_loop_ms, 4),
-        "vmap_parallel_ms": round(vmap_parallel_ms, 4),
+        "compiled_loop_ms": round(compiled_loop_ms, 4),
+        "vmap_batched_ms": round(vmap_batched_ms, 4),
         "speedup": round(speedup, 2),
+        "speedup_vs_compiled_loop": round(speedup_vs_compiled_loop, 2),
     }
 
 
 def main() -> None:
     res = run_experiment()
     print("=" * 72)
-    print("Experiment 05: Deterministic & Parallelizable PRNG Keys (Threefry)")
+    print("Experiment 05: Deterministic, Batchable PRNG Keys (Threefry)")
     print("=" * 72)
     print(f"Backend Device                     : {res['backend']}")
-    print(f"Parallel Worker Streams            : {res['n_workers']} independent keys")
+    print(f"Worker Streams                     : {res['n_workers']} independent keys")
     print(f"Reused Key Antipattern Identical   : {res['reused_key_identical']} (must split!)")
     print(f"Split Keys Produce Distinct Draws  : {res['split_keys_distinct']}")
     print(f"Order-Invariant (Fwd vs Reversed)  : {res['bitwise_order_invariant']} (diff={res['max_diff_forward_reversed']:.2e})")
-    print(f"Max |Sequential - Parallel vmap|   : {res['max_diff_sequential_vmap']:.2e}")
+    print(f"Max |Sequential - Batched vmap|    : {res['max_diff_sequential_vmap']:.2e}")
     print("-" * 72)
-    print(f"Sequential Worker Loop Time        : {res['sequential_loop_ms']:.4f} ms")
-    print(f"Parallel @jit(vmap) PRNG Time      : {res['vmap_parallel_ms']:.4f} ms")
-    print(f"Speedup (Parallel vmap vs Loop)    : {res['speedup']:.2f}x")
+    print(f"Sequential Eager Loop Time         : {res['sequential_loop_ms']:.4f} ms")
+    print(f"Loop over jit(single worker) Time  : {res['compiled_loop_ms']:.4f} ms (keys pre-split)")
+    print(f"Batched @jit(vmap) PRNG Time       : {res['vmap_batched_ms']:.4f} ms")
+    print(f"Speedup (Batched vmap vs Loop)     : {res['speedup']:.2f}x")
+    print(f"Speedup vs Loop over jit(single)   : {res['speedup_vs_compiled_loop']:.2f}x (fair baseline)")
 
 
 if __name__ == "__main__":

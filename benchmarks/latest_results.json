@@ -3,6 +3,19 @@
     "python_version": "3.12.11",
     "platform": "macOS-26.6.2-arm64-arm-64bit",
     "processor": "arm",
+    "cpu_model": "Apple M1 Max",
+    "cpu_count": 10,
+    "load_average_before": [
+      7.58,
+      16.49,
+      17.27
+    ],
+    "load_average_after": [
+      7.45,
+      16.31,
+      17.2
+    ],
+    "timing": "median ms per call after one warmup call; varies run to run",
     "jax_version": "0.12.0.1",
     "numpy_version": "2.5.4",
     "jax_backend": "cpu",
@@ -18,13 +31,17 @@
       ],
       "immutability_error_raised": true,
       "original_unmodified": true,
-      "numpy_ms": 6.1456,
-      "jax_eager_ms": 4.6996,
-      "jax_jit_ms": 0.3412,
-      "speedup_vs_numpy": 18.01,
-      "speedup_vs_eager": 13.78,
+      "numpy_ms": 6.167,
+      "numpy_hoisted_ms": 1.4747,
+      "jax_eager_ms": 4.4308,
+      "jax_jit_ms": 0.3467,
+      "speedup_vs_numpy": 17.79,
+      "speedup_vs_eager": 12.78,
+      "speedup_vs_numpy_hoisted": 4.25,
+      "eager_vs_numpy": 1.39,
       "max_diff_np_jit": 1.52587890625e-05,
-      "max_diff_eager_jit": 1.52587890625e-05
+      "max_diff_eager_jit": 1.52587890625e-05,
+      "max_diff_hoisted_jit": 3.0517578125e-05
     },
     "02_jit_tracing_vs_execution": {
       "experiment": "02_jit_tracing_vs_execution",
@@ -34,10 +51,10 @@
       "trace_count_after_new_shape": 2,
       "jaxpr_num_equations": 15,
       "stablehlo_lines": 61,
-      "first_call_compile_ms": 36.807,
-      "numpy_ms": 0.5119,
-      "cached_jit_ms": 0.0992,
-      "speedup": 5.16,
+      "first_call_compile_ms": 36.923,
+      "numpy_ms": 0.5132,
+      "cached_jit_ms": 0.102,
+      "speedup": 5.03,
       "max_diff": 2.384185791015625e-07,
       "lax_cond_l2_norm": 1.0,
       "lax_cond_linf_max": 1.0
@@ -52,19 +69,25 @@
       "final_loss": 0.000519,
       "loss_reduction_ratio": 376.48,
       "grad_max_diff_vs_finite_diff": 1.2359581887722015e-05,
-      "finite_diff_ms": 1.8646,
-      "jax_value_and_grad_ms": 0.0576,
-      "speedup": 32.39
+      "finite_diff_jit_max_diff_vs_exact": 2.4160370230674744e-05,
+      "finite_diff_ms": 1.8369,
+      "finite_diff_jit_ms": 0.3449,
+      "jax_value_and_grad_ms": 0.0533,
+      "speedup": 34.48,
+      "speedup_vs_compiled_fd": 6.47
     },
     "04_vmap_goodbye_for_loops": {
       "experiment": "04_vmap_goodbye_for_loops",
       "backend": "cpu",
       "batch_size": 10000,
       "feature_dim": 16,
-      "for_loop_ms": 33.2483,
-      "vmap_jit_ms": 0.1606,
-      "speedup": 207.02,
-      "max_diff": 1.1920928955078125e-07
+      "for_loop_ms": 33.5893,
+      "numpy_vectorized_ms": 0.3204,
+      "vmap_jit_ms": 0.1571,
+      "speedup": 213.77,
+      "speedup_vs_numpy_vectorized": 2.04,
+      "max_diff": 1.1920928955078125e-07,
+      "max_diff_vectorized": 1.1920928955078125e-07
     },
     "05_deterministic_prng_keys": {
       "experiment": "05_deterministic_prng_keys",
@@ -75,9 +98,11 @@
       "bitwise_order_invariant": true,
       "max_diff_forward_reversed": 0.0,
       "max_diff_sequential_vmap": 1.1920928955078125e-07,
-      "sequential_loop_ms": 428.3968,
-      "vmap_parallel_ms": 9.0142,
-      "speedup": 47.52
+      "sequential_loop_ms": 419.0313,
+      "compiled_loop_ms": 98.998,
+      "vmap_batched_ms": 8.9766,
+      "speedup": 46.68,
+      "speedup_vs_compiled_loop": 11.03
     }
   },
   "all_verifications_passed": true

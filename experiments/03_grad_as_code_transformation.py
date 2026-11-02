@@ -7,6 +7,11 @@ Demonstrates:
    in both precision and computational complexity (`O(1)` passes vs `O(2*D)` evaluations
    for a `D`-dimensional parameter vector).
 3. Solving a 32-parameter thermal/sensor calibration problem in 20 optimization steps.
+
+Two speedups are reported. The headline one compares interpreted NumPy finite
+differences against compiled `value_and_grad`, so it mixes compilation with autodiff.
+The fair one compiles the finite differences too (`jit(vmap)` over the 64 perturbed
+evaluations), which isolates what autodiff itself saves.
 """
 
 from __future__ import annotations
@@ -66,6 +71,24 @@ def finite_difference_grad(
 loss_and_grad_fn = jax.jit(jax.value_and_grad(sensor_calibration_loss))
 
 
+@jax.jit
+def finite_difference_grad_jit(
+    params: jax.Array,
+    features: jax.Array,
+    targets: jax.Array,
+    eps: float = 1e-3,
+) -> jax.Array:
+    """Fairer baseline: the same 2*D central differences, compiled with jit(vmap)."""
+    steps = jnp.eye(params.shape[0], dtype=params.dtype) * eps
+
+    def loss_at(delta: jax.Array) -> jax.Array:
+        return sensor_calibration_loss(params + delta, features, targets)
+
+    plus = jax.vmap(loss_at)(steps)
+    minus = jax.vmap(loss_at)(-steps)
+    return (plus - minus) / (2.0 * eps)
+
+
 def _median_ms(fn: Callable[[], Any], n_iters: int) -> float:
     """Median wall time of `fn()` in ms (robust to noisy neighbours on a shared machine)."""
     times = []
@@ -116,10 +139,19 @@ def run_benchmark(
     # Compute central finite differences in NumPy
     fd_grad = finite_difference_grad(init_params_np, features_np, targets_np, eps=1e-3)
     grad_max_diff = float(np.max(np.abs(fd_grad - np.asarray(exact_grad))))
+    fd_jit_grad = finite_difference_grad_jit(init_params_jax, features_jax, targets_jax)
+    fd_jit_grad.block_until_ready()
+    fd_jit_max_diff = float(np.max(np.abs(np.asarray(fd_jit_grad) - np.asarray(exact_grad))))
 
     # Benchmark finite differences vs jax.jit(jax.value_and_grad) (median per call)
     fd_ms = _median_ms(
         lambda: finite_difference_grad(init_params_np, features_np, targets_np, eps=1e-3), n_iters
+    )
+    fd_jit_ms = _median_ms(
+        lambda: finite_difference_grad_jit(
+            init_params_jax, features_jax, targets_jax
+        ).block_until_ready(),
+        n_iters,
     )
     autodiff_ms = _median_ms(
         lambda: loss_and_grad_fn(init_params_jax, features_jax, targets_jax)[1].block_until_ready(),
@@ -127,6 +159,7 @@ def run_benchmark(
     )
 
     speedup = fd_ms / autodiff_ms
+    speedup_vs_compiled_fd = fd_jit_ms / autodiff_ms
 
     # Run 20-step sensor calibration optimization
     params = init_params_jax
@@ -148,9 +181,12 @@ def run_benchmark(
         "final_loss": round(final_loss_val, 6),
         "loss_reduction_ratio": round(loss_reduction_ratio, 2),
         "grad_max_diff_vs_finite_diff": grad_max_diff,
+        "finite_diff_jit_max_diff_vs_exact": fd_jit_max_diff,
         "finite_diff_ms": round(fd_ms, 4),
+        "finite_diff_jit_ms": round(fd_jit_ms, 4),
         "jax_value_and_grad_ms": round(autodiff_ms, 4),
         "speedup": round(speedup, 2),
+        "speedup_vs_compiled_fd": round(speedup_vs_compiled_fd, 2),
     }
 
 
@@ -165,8 +201,10 @@ def main() -> None:
     print(f"Loss After {res['n_steps']} Steps              : {res['final_loss']:.6f} ({res['loss_reduction_ratio']:.2f}x lower)")
     print("-" * 72)
     print(f"Central Finite Diff (64 evals)   : {res['finite_diff_ms']:.4f} ms")
+    print(f"Compiled Finite Diff jit(vmap)   : {res['finite_diff_jit_ms']:.4f} ms")
     print(f"JAX @jit(value_and_grad) (1 pass): {res['jax_value_and_grad_ms']:.4f} ms")
     print(f"Speedup vs Finite Differences    : {res['speedup']:.2f}x")
+    print(f"Speedup vs Compiled Finite Diff  : {res['speedup_vs_compiled_fd']:.2f}x (autodiff alone)")
     print(f"Max |Finite Diff - Exact Grad|   : {res['grad_max_diff_vs_finite_diff']:.2e}")
 
 

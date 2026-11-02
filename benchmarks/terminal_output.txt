@@ -1,15 +1,17 @@
-==============================================================================
+==============================================================================================================
 THE OUTSIDE JUDGE — JAX for Software Devs Verification Report
-==============================================================================
+==============================================================================================================
 Runtime : Python 3.12.11 | JAX 0.12.0.1 | NumPy 2.5.4 | Backend: cpu
-------------------------------------------------------------------------------
-Experiment                         | Baseline       | JAX/OpenXLA    | Speedup / Check
-------------------------------------------------------------------------------
-01. jnp & .at[].set() Simulation   | 4.6996 ms      | 0.3412 ms      | 13.78x (PASS)  
-02. @jit Tracing vs Cached Exec    | 0.5119 ms      | 0.0992 ms      | 5.16x (1 trace)
-03. value_and_grad vs Finite Diff  | 1.8646 ms      | 0.0576 ms      | 32.39x (PASS)  
-04. vmap Batch (10,000 records)    | 33.2483 ms     | 0.1606 ms      | 207.02x (PASS) 
-05. Parallel Threefry PRNG Keys    | 428.3968 ms    | 9.0142 ms      | 47.52x (Δ=0.0) 
-------------------------------------------------------------------------------
+CPU     : Apple M1 Max (10 cores) | 1-min load average 7.58 before, 7.45 after
+--------------------------------------------------------------------------------------------------------------
+Experiment                         | Baseline      | JAX/OpenXLA | Speedup / Check | Fair baseline            
+--------------------------------------------------------------------------------------------------------------
+01. jit vs eager (portfolio sim)   | 4.4308 ms     | 0.3467 ms   | 12.78x (PASS)   | 4.25x vs hoisted NumPy   
+02. Cached @jit vs NumPy           | 0.5132 ms     | 0.102 ms    | 5.03x (1 trace) | same (already vs NumPy)  
+03. value_and_grad vs Finite Diff  | 1.8369 ms     | 0.0533 ms   | 34.48x (PASS)   | 6.47x vs jit finite diff 
+04. vmap vs for-loop (10k records) | 33.5893 ms    | 0.1571 ms   | 213.77x (PASS)  | 2.04x vs vectorized NumPy
+05. Batched Threefry keys (vmap)   | 419.0313 ms   | 8.9766 ms   | 46.68x (Δ=0.0)  | 11.03x vs loop over jit  
+--------------------------------------------------------------------------------------------------------------
+Times are medians per call after a warmup and vary run to run (about ±15-20%).
 Saved JSON report to: benchmarks/latest_results.json
 ALL DETERMINISTIC CHECKS PASSED.
