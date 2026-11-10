@@ -70,7 +70,19 @@ ALL DETERMINISTIC CHECKS PASSED.
 - **Mediana por llamada después del warmup.** La primera llamada a una función con `@jax.jit` incluye tracing y compilación (unos 44 ms en el experimento 02) y no entra en las medianas.
 - **CPU de una laptop.** Todo corre en CPU (Apple M1 Max, 10 núcleos), sin GPU ni TPU. Con estos tamaños, la diferencia entre XLA multihilo y NumPy de un hilo no explica los speedups (desactivar los hilos de XLA no cambia los tiempos de forma apreciable). `vmap` vectoriza en un solo batch compilado; no reparte trabajo entre núcleos por sí mismo.
 - **Variación entre corridas.** En la misma máquina, los speedups cambian ±15–20 % de una corrida a otra (por ejemplo, la fila 01 contra NumPy ha dado entre 15x y 22x). Los dos decimales que imprime el juez no implican esa precisión.
-- **Videos.** La tabla del juez que aparece en el [video de práctica](https://youtu.be/p1dv3q2INGQ) (13.78x / 5.16x / 32.39x / 207.02x / 47.52x) es una corrida anterior de este mismo código, antes de agregar los baselines justos. La segunda versión del video de práctica muestra exactamente la corrida de esta tabla (`make report`). El [video de teoría](https://youtu.be/kIRbH33BGBo) usa cifras de una versión anterior que medía la media en lugar de la mediana y extrapolaba el loop del experimento 05.
+- **Videos.** La tabla del juez que aparece en el [video de práctica](https://youtu.be/f3Dqu664vLI) muestra exactamente la corrida de esta tabla (`make report`) incluyendo la columna de baselines justos. El [video de teoría](https://youtu.be/kIRbH33BGBo) explica el modelo mental detrás de cada primitiva (y usa cifras de una versión anterior que medía la media en lugar de la mediana y extrapolaba el loop del experimento 05).
+
+---
+
+## Videos y Artículos en Substack
+
+- **Videos en YouTube** — [Teoría · Modelo mental](https://youtu.be/kIRbH33BGBo) · [Práctica · Código y Outside Judge](https://youtu.be/f3Dqu664vLI) · [Playlist de la Serie B](https://www.youtube.com/playlist?list=PLBfvQdCFgMjE)
+- **Artículos en Substack (`ykro1.substack.com`)**
+  1. [De NumPy a jax.numpy, arrays inmutables](https://ykro1.substack.com/p/de-numpy-a-jax-arrays-inmutables) (`experiments/01_numpy_to_jax_arrays.py`)
+  2. [Qué hace @jax.jit entre el tracing y la ejecución](https://ykro1.substack.com/p/como-piensa-jax-jit-entre-tracing-y-ejecucion) (`experiments/02_jit_tracing_vs_execution.py`)
+  3. [jax.grad como transformación de código, sin redes neuronales](https://ykro1.substack.com/p/jax-grad-como-transformacion-de-codigo) (`experiments/03_grad_as_code_transformation.py`)
+  4. [Adiós a los for-loops con jax.vmap](https://ykro1.substack.com/p/adios-a-los-for-loops-con-jax-vmap) (`experiments/04_vmap_goodbye_for_loops.py`)
+  5. [Aleatoriedad determinista con PRNG keys en JAX](https://ykro1.substack.com/p/aleatoriedad-determinista-con-prng-keys-en-jax) (`experiments/05_deterministic_prng_keys.py`)
 
 ---
 
