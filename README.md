@@ -3,7 +3,7 @@
 - **Por qué es relevante:** JAX permite escribir funciones matemáticas en Python con la misma API de `numpy` y transformarlas mediante un compilador (`@jax.jit`, `jax.grad`, `jax.vmap`) en binarios nativos de OpenXLA que corren en CPU, GPU y Cloud TPU sin escribir un solo kernel en C++ o CUDA.
 - **Para quién es:** Ingenieros de software, desarrolladores backend y científicos de datos que dominan Python y NumPy, pero nunca han usado JAX ni necesitan venir del mundo de PyTorch o Deep Learning.
 - **Quién debería verlo:** Desarrolladores que construyen simulaciones de Montecarlo, motores de riesgo o precios, calibración de sensores, optimización numérica o procesamiento de datos por `batches` y buscan eliminar `for-loops` lentos de Python.
-- **Serie completa:** Punto de entrada de la Serie B [JAX & ML for Software Devs Field Guide](https://github.com/ykro/jax-ml-for-software-devs-field-guide) (y compañero de la Serie A [JAX & OpenXLA Field Guide](https://github.com/ykro/jax-openxla-field-guide)).
+- **Serie completa:** Punto de entrada del [JAX & ML for Software Devs Field Guide](https://github.com/ykro/jax-ml-for-software-devs-field-guide) (y compañero del [JAX & OpenXLA Field Guide](https://github.com/ykro/jax-openxla-field-guide), para quien viene de PyTorch).
 
 ---
 
@@ -76,7 +76,7 @@ ALL DETERMINISTIC CHECKS PASSED.
 
 ## Videos y Artículos en Substack
 
-- **Videos en YouTube** — [Teoría · Modelo mental](https://youtu.be/kIRbH33BGBo) · [Práctica · Código y Outside Judge](https://youtu.be/f3Dqu664vLI) · [Playlist de la Serie B](https://www.youtube.com/playlist?list=PLBfvQdCFgMjE)
+- **Videos en YouTube** — [Teoría · Modelo mental](https://youtu.be/kIRbH33BGBo) · [Práctica · Código y Outside Judge](https://youtu.be/f3Dqu664vLI) · [Playlist del Field Guide](https://www.youtube.com/playlist?list=PLBfvQdCFgMjE)
 - **Artículos en Substack (`ykro1.substack.com`)**
   1. [De NumPy a jax.numpy, arrays inmutables](https://ykro1.substack.com/p/de-numpy-a-jax-arrays-inmutables) (`experiments/01_numpy_to_jax_arrays.py`)
   2. [Qué hace @jax.jit entre el tracing y la ejecución](https://ykro1.substack.com/p/como-piensa-jax-jit-entre-tracing-y-ejecucion) (`experiments/02_jit_tracing_vs_execution.py`)
