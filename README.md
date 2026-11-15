@@ -127,7 +127,22 @@ pip install --upgrade pip
 pip install -e ".[dev]"
 ```
 
-### 2. Recorrido guiado por los 5 experimentos (Orden recomendado)
+### 2. Práctica a mano (los fragmentos del video de práctica)
+
+La carpeta `practica/` tiene los fragmentos cortos que se escriben en el video de práctica. Los dos `*_roto.py` fallan a propósito: el error es parte del ejercicio. Escríbelos tú antes de abrirlos.
+
+```bash
+python practica/01_mutar_roto.py   # TypeError, los arreglos de JAX son inmutables
+python practica/01_mutar.py        # .at[1].set(13.0) devuelve un arreglo nuevo
+python practica/02_trazar.py       # el print corre al trazar, una vez por forma y tipo
+python practica/02_if_roto.py      # TracerBoolConversionError, un if sobre un valor trazado
+python practica/02_if.py           # jnp.where decide dentro del programa compilado
+python practica/03_calibrar.py     # jax.grad calibra un sensor con gradient descent
+python practica/04_vmap.py         # una función para una transacción, vmap para 10,000
+python practica/05_llaves.py       # misma llave, mismos números; split, uno por worker
+```
+
+### 3. Recorrido guiado por los 5 experimentos (Orden recomendado)
 
 Cada script toma unos pocos segundos y explica un pilar del modelo mental de JAX para ingenieros de software:
 
@@ -149,7 +164,7 @@ python experiments/04_vmap_goodbye_for_loops.py
 python experiments/05_deterministic_prng_keys.py
 ```
 
-### 3. Verificación completa (Linter + Tests + Outside Judge)
+### 4. Verificación completa (Linter + Tests + Outside Judge)
 
 ```bash
 # Ejecutar únicamente el Outside Judge y actualizar benchmarks/latest_results.json
@@ -163,7 +178,7 @@ make all
 make report
 ```
 
-### 4. Ejecución on-demand con auto-teardown en Google Cloud (Cloud TPU v5e o NVIDIA L4 GPU)
+### 5. Ejecución on-demand con auto-teardown en Google Cloud (Cloud TPU v5e o NVIDIA L4 GPU)
 
 El script `gcp/run_on_demand_benchmark.sh` aprovisiona instancias on-demand con auto-teardown en tu propio proyecto de Google Cloud (variable `GCP_PROJECT_ID`) y garantiza la limpieza automática de los recursos mediante `trap cleanup EXIT INT TERM`.
 
