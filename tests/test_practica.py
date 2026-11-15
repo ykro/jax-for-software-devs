@@ -62,3 +62,8 @@ def test_05_llaves_same_key_same_numbers() -> None:
     a, b = first.split("] [")
     assert a + "]" == "[" + b
     assert lines[-1].startswith("4 workers:")
+
+
+def test_06_componer_one_gradient_per_sensor() -> None:
+    out = run("06_componer.py").stdout
+    assert "un gradiente por sensor: (1000, 2)" in out

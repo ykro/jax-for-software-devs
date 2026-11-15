@@ -140,6 +140,7 @@ python practica/02_if.py           # jnp.where decide dentro del programa compil
 python practica/03_calibrar.py     # jax.grad calibra un sensor con gradient descent
 python practica/04_vmap.py         # una función para una transacción, vmap para 10,000
 python practica/05_llaves.py       # misma llave, mismos números; split, uno por worker
+python practica/06_componer.py     # jit(vmap(grad)): un gradiente por sensor, en una llamada
 ```
 
 ### 3. Recorrido guiado por los 5 experimentos (Orden recomendado)
