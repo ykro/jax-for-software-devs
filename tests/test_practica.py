@@ -32,6 +32,14 @@ def test_02_trazar_traces_once_per_shape() -> None:
     assert lines == ["trazando con (30,) float32", "tres llamadas listas", "trazando con (60,) float32"]
 
 
+def test_02_jaxpr_shows_the_recorded_program() -> None:
+    out = run("02_jaxpr.py").stdout
+    assert out.startswith("{ lambda ; a:f32[30]. let")
+    for op in ("= slice[", "= div b c", "= log d", "in (e,) }"):
+        assert op in out
+    assert "100." not in out  # only shapes and dtypes, none of the prices
+
+
 def test_02_if_roto_raises_tracer_bool_error() -> None:
     r = run("02_if_roto.py")
     assert r.returncode != 0

@@ -118,6 +118,8 @@ ALL DETERMINISTIC CHECKS PASSED.
 
 ### 1. Instalación desde cero (macOS / Linux)
 
+Necesitas Python 3.11 o más nuevo. Revisa con `python3 --version` antes de crear el entorno.
+
 ```bash
 git clone https://github.com/ykro/jax-for-software-devs.git
 cd jax-for-software-devs
@@ -135,6 +137,7 @@ La carpeta `practica/` tiene los fragmentos cortos que se escriben en el video d
 python practica/01_mutar_roto.py   # TypeError, los arreglos de JAX son inmutables
 python practica/01_mutar.py        # .at[1].set(13.0) devuelve un arreglo nuevo
 python practica/02_trazar.py       # el print corre al trazar, una vez por forma y tipo
+python practica/02_jaxpr.py        # make_jaxpr muestra el programa que JAX grabó al trazar
 python practica/02_if_roto.py      # TracerBoolConversionError, un if sobre un valor trazado
 python practica/02_if.py           # jnp.where decide dentro del programa compilado
 python practica/03_calibrar.py     # jax.grad calibra un sensor con gradient descent
