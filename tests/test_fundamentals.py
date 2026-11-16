@@ -60,3 +60,20 @@ def test_05_deterministic_prng_keys() -> None:
     assert res["max_diff_sequential_vmap"] < 1e-6
     assert res["compiled_loop_ms"] > 0.0
     assert res["speedup"] >= 10.0
+
+
+def test_judge_retries_a_slow_timing_and_keeps_every_attempt() -> None:
+    import verify_fundamentals as judge
+
+    runs = iter([1.2, 4.0])
+    res = judge._timed(lambda: {"speedup": next(runs)}, "speedup", 1.5, "Exp02")
+    assert res["speedup"] == 4.0
+    assert res["timing_attempts"] == [1.2, 4.0]
+
+
+def test_judge_still_reports_a_real_regression() -> None:
+    import verify_fundamentals as judge
+
+    res = judge._timed(lambda: {"speedup": 0.9}, "speedup", 1.5, "Exp02")
+    assert res["speedup"] < 1.5
+    assert res["timing_attempts"] == [0.9] * judge.TIMING_ATTEMPTS

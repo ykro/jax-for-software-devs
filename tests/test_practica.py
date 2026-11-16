@@ -40,6 +40,13 @@ def test_02_jaxpr_shows_the_recorded_program() -> None:
     assert "100." not in out  # only shapes and dtypes, none of the prices
 
 
+def test_02_stablehlo_shows_what_the_compiler_receives() -> None:
+    out = run("02_stablehlo.py").stdout
+    assert out.startswith("module @jit_rendimientos")
+    for op in ("stablehlo.slice", "stablehlo.divide", "stablehlo.log", "tensor<29xf32>"):
+        assert op in out
+
+
 def test_02_if_roto_raises_tracer_bool_error() -> None:
     r = run("02_if_roto.py")
     assert r.returncode != 0
@@ -70,6 +77,20 @@ def test_05_llaves_same_key_same_numbers() -> None:
     a, b = first.split("] [")
     assert a + "]" == "[" + b
     assert lines[-1].startswith("4 workers:")
+
+
+def test_05_llaves_uses_each_key_once() -> None:
+    # The workers' keys come from the third split key, never from the key already split.
+    import jax
+
+    llave = jax.random.key(42)
+    k1, k2, k_workers = jax.random.split(llave, 3)
+    workers = jax.random.split(k_workers, 4)
+    data = [jax.random.key_data(k).tolist() for k in (k1, k2)]
+    assert all(jax.random.key_data(w).tolist() not in data for w in workers)
+    esperados = jax.vmap(lambda k: jax.random.uniform(k))(workers)
+    impreso = run("05_llaves.py").stdout.splitlines()[-1]
+    assert impreso == f"4 workers:   {esperados}"
 
 
 def test_06_componer_one_gradient_per_sensor() -> None:
