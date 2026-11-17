@@ -3,6 +3,7 @@
 - **Por qué es relevante:** JAX permite escribir funciones matemáticas en Python con la misma API de `numpy` y transformarlas mediante un compilador (`@jax.jit`, `jax.grad`, `jax.vmap`) en binarios nativos de OpenXLA que corren en CPU, GPU y Cloud TPU sin escribir un solo kernel en C++ o CUDA.
 - **Para quién es:** Ingenieros de software, desarrolladores backend y científicos de datos que dominan Python y NumPy, pero nunca han usado JAX ni necesitan venir del mundo de PyTorch o Deep Learning.
 - **Quién debería verlo:** Desarrolladores que construyen simulaciones de Montecarlo, motores de riesgo o precios, calibración de sensores, optimización numérica o procesamiento de datos por `batches` y buscan eliminar `for-loops` lentos de Python.
+- **Videos:** [teoría](https://youtu.be/kIRbH33BGBo) y [práctica, escribiendo cada fragmento de `practica/`](https://youtu.be/UJgyZ6TqC4M).
 - **Serie completa:** Punto de entrada del [JAX & ML for Software Devs Field Guide](https://github.com/ykro/jax-ml-for-software-devs-field-guide) (y compañero del [JAX & OpenXLA Field Guide](https://github.com/ykro/jax-openxla-field-guide), para quien viene de PyTorch).
 
 ---
